@@ -1,3 +1,4 @@
+package thesis;
 
 public enum Strategy {
     FORWARD,
