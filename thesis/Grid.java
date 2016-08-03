@@ -1,5 +1,6 @@
 package thesis;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Grid {
     
@@ -18,8 +19,15 @@ public class Grid {
         terminal_num++;
     }
     
+    public Iterator<Terminal> getTerminals() {
+        return terminalList.iterator();
+    }
+    
     public int getTermNum() {
         
         return terminal_num;
+    }
+    
+    public static void main(String[] args) {
     }
 }

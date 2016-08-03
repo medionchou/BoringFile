@@ -148,7 +148,11 @@ public class Environment {
         Environment e = new Environment(Type.NORMAL_DISTRIBUTION);
         
         e.exportFile("text.txt");
-        System.out.print(e);        
+        System.out.print(e);     
+        
+        UAV uav = new RawUAV(0, 0, 0, false);
+
+        uav.run();
     }
 
 }
