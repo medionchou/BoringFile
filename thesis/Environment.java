@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -31,77 +32,11 @@ public class Environment {
     public Environment(String file) {
         read_file(file);
     }
-
-    private void initSetting(Type type) {
-
-        switch (type) {
-        case NORMAL_DISTRIBUTION:
-            normal_distribution();
-            break;
-        case POISSON_DISTRIBUTION:
-            poisson_distrbution();
-            break;
-        }
-    }
     
-    private void initObj(int grid_size, int terminal_num) {
-        grid = new Grid[grid_size][grid_size];
-        x = new int[terminal_num];
-        y = new int[terminal_num];
-        weight = new int[terminal_num];
-        
-        this.grid_size = grid_size;
-        this.terminal_num = terminal_num;
-        
-        for (int i = 0; i < grid_size; i++) {
-            for (int j = 0; j < grid_size; j++) {
-                grid[i][j] = new Grid();
-            }
-        }
-    }
-
-    private void normal_distribution() {
-        initObj(grid_size, terminal_num);
-        
-        Random r = new Random();
-        
-        for (int i = 0; i < terminal_num; i++) {
-            x[i] = r.nextInt(grid_size);
-            y[i] = r.nextInt(grid_size);
-            weight[i] = r.nextInt(MAX_WEIGHT);
-            Terminal t = new Terminal(x[i], y[i], weight[i]);
-            
-            grid[x[i]][y[i]].addTerminal(t);
-        }
-    }
-
-    private void poisson_distrbution() {
-        initObj(grid_size, terminal_num);
-        
-    }
-
-    private void read_file(String filename) {
-        try {
-            Scanner sc = new Scanner(new File(filename));
-            
-            grid_size = sc.nextInt();
-            terminal_num = sc.nextInt();
-            initObj(grid_size, terminal_num);
-            
-            for (int i = 0; i < terminal_num; i++) {
-                x[i] = sc.nextInt();
-                y[i] = sc.nextInt();
-                weight[i] = sc.nextInt();
-                Terminal t = new Terminal(x[i], y[i], weight[i]);
-                
-                grid[x[i]][y[i]].addTerminal(t);
-            }
-        } catch(IOException e) {
-            System.out.println(e.toString());
-        }
-    }
     
     public void exportFile(String filename) {
+        if (filename.length() == 0) return;
+        
         try {
             File file = new File(filename);
             PrintWriter pw = new PrintWriter(file);
@@ -117,7 +52,6 @@ public class Environment {
         } catch (FileNotFoundException e) {
             System.out.println(e.toString());
         }
-        
     }
     
     public String toString() {
@@ -144,15 +78,95 @@ public class Environment {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
-        Environment e = new Environment(Type.NORMAL_DISTRIBUTION);
-        
-        e.exportFile("text.txt");
-        System.out.print(e);     
-        
-        UAV uav = new RawUAV(0, 0, 0, false);
 
-        uav.run();
+    private void initSetting(Type type) {
+
+        switch (type) {
+        case NORMAL_DISTRIBUTION:
+            normal_distribution();
+            break;
+        case POISSON_DISTRIBUTION:
+            poisson_distrbution();
+            break;
+        }
+    }
+
+    private void normal_distribution() {
+        Random r = new Random();
+        
+        initObj(grid_size, terminal_num);
+        
+        seeds(new RandomWrapper(r), grid_size, MAX_WEIGHT);
+    }
+
+    private void poisson_distrbution() {
+        initObj(grid_size, terminal_num);
+        
+    }
+    
+    private void read_file(String filename) {
+        try {
+            Scanner sc = new Scanner(new File(filename));
+            
+            grid_size = sc.nextInt();
+            terminal_num = sc.nextInt();
+            initObj(grid_size, terminal_num);
+            seeds(new ScannerWrapper(sc), 10, 10);      
+            sc.close();
+        } catch(IOException e) {
+            System.out.println(e.toString());
+        }
+    }
+    
+    private void seeds(Wrapper w, int params, int redundant) {
+        for (int i = 0; i < terminal_num; i++) {
+            x[i] = w.nextInt(params);
+            y[i] = w.nextInt(params);
+            weight[i] = w.nextInt(redundant);
+            Terminal t = new Terminal(x[i], y[i], weight[i]);
+            grid[x[i]][y[i]].addTerminal(t);
+        }
+    }
+    
+    
+    private void initObj(int grid_size, int terminal_num) {
+        grid = new Grid[grid_size][grid_size];
+        x = new int[terminal_num];
+        y = new int[terminal_num];
+        weight = new int[terminal_num];
+        
+        this.grid_size = grid_size;
+        this.terminal_num = terminal_num;
+        
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                grid[i][j] = new Grid();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        
+        ArrayList<UAV> a = new ArrayList<>();
+        RawUAV t1 = new RawUAV(1, 1, 1, true);
+        RawUAV t2 = new RawUAV(1, 2, 1, true);
+        RawUAV t3 = new RawUAV(3, 1, 1, true);
+        RawUAV t4 = new RawUAV(1, 1, 4, true);
+        
+        a.add(t1);
+        a.add(t2);
+        a.add(t3);
+        a.add(t4);
+        
+        t1.move(0.5, 0, 0);
+        t1.move(0.5, 1, 0);
+        
+        
+        System.out.println(a.get(0));
+        System.out.println(t1);
+        
+
     }
 
 }
+

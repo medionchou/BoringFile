@@ -23,15 +23,30 @@ public abstract class UAV {
         id = ID++;
     }
     
-    public void move(double x, double y, double z, boolean isOpen) {
+    public void move(double x, double y, double z) {
         this.x += x;
         this.y += y;
         this.z += z;
-        this.isOpen = isOpen;
+    }
+    
+    public void open(boolean isOpen) {
+        this.isOpen = isOpen; 
     }
     
     public int getID() {
         return id;
+    }
+    
+    public boolean within_distance(double x, double y) {
+        return true;
+    }
+    
+    public void traverse(Grid[][] grid) {
+        
+    }
+    
+    public String toString() {
+        return "x: " + x + " y:" + y + " z:" + z;
     }
     
     public abstract void run();

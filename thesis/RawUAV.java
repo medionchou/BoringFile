@@ -14,7 +14,6 @@ public class RawUAV extends UAV {
 
     
     private double utility() {
-        // TODO Auto-generated method stub
         return 0;
     }
 

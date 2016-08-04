@@ -29,5 +29,8 @@ public class Terminal {
         return uavList.size();
     }
     
+    public double getSIR(int uavID) {
+        return 0.0;
+    }
     
 }
