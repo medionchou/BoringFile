@@ -93,7 +93,7 @@ public class Environment {
 
     private void normal_distribution() {
         Random r = new Random();
-        
+      
         initObj(grid_size, terminal_num);
         
         seeds(new RandomWrapper(r), grid_size, MAX_WEIGHT);
@@ -107,7 +107,6 @@ public class Environment {
     private void read_file(String filename) {
         try {
             Scanner sc = new Scanner(new File(filename));
-            
             grid_size = sc.nextInt();
             terminal_num = sc.nextInt();
             initObj(grid_size, terminal_num);
@@ -129,7 +128,7 @@ public class Environment {
             x[i] = w.nextInt(params);
             y[i] = w.nextInt(params);
             weight[i] = w.nextInt(redundant);
-            Terminal t = new Terminal(x[i], y[i], weight[i]);
+            Terminal t = new Terminal(x[i], y[i], weight[i], null);
             grid[x[i]][y[i]].addTerminal(t);
         }
     }
@@ -152,7 +151,9 @@ public class Environment {
     }
 
     public static void main(String[] args) {
-
+//        Environment en = new Environment(Type.NORMAL_DISTRIBUTION);
+        
+        System.out.println(Double.compare(1, 1.000));
     }
 
 }

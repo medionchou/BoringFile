@@ -7,7 +7,6 @@ public abstract class UAV {
     public final static int MAX_HEIGHT = 100;
     public final static double MOVE_MOMENT = 0.5;
     public final static double TRANSMIT_POWER = 46;
-    public final static double SIR_NOT_DEFINED = -1;
 
     private static int ID; //for automatically increment id
     
@@ -15,7 +14,6 @@ public abstract class UAV {
     private double x;
     private double y;
     private double z;
-    private double cachedSIR;
     private boolean isOpen;
 
     
@@ -23,7 +21,6 @@ public abstract class UAV {
         this.x = x;
         this.y = y;
         this.z = z;
-        cachedSIR = UAV.SIR_NOT_DEFINED;
         this.isOpen = isOpen;
         id = ID++;
     }
@@ -40,14 +37,6 @@ public abstract class UAV {
     
     public int getID() {
         return id;
-    }
-    
-    public double getCachedSIR() {
-        return cachedSIR;
-    }
-    
-    public void setCachedSIR(double val) {
-        cachedSIR = val;
     }
     
     public double x() {
