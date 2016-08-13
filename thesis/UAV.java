@@ -1,10 +1,13 @@
 package thesis;
 
+import java.util.Iterator;
+
 public abstract class UAV {
 
     public final static int MAX_HEIGHT = 100;
     public final static double MOVE_MOMENT = 0.5;
     public final static double TRANSMIT_POWER = 46;
+    public final static double SIR_NOT_DEFINED = -1;
 
     private static int ID; //for automatically increment id
     
@@ -12,6 +15,7 @@ public abstract class UAV {
     private double x;
     private double y;
     private double z;
+    private double cachedSIR;
     private boolean isOpen;
 
     
@@ -19,6 +23,7 @@ public abstract class UAV {
         this.x = x;
         this.y = y;
         this.z = z;
+        cachedSIR = UAV.SIR_NOT_DEFINED;
         this.isOpen = isOpen;
         id = ID++;
     }
@@ -37,12 +42,24 @@ public abstract class UAV {
         return id;
     }
     
-    public boolean within_distance(double x, double y) {
-        return true;
+    public double getCachedSIR() {
+        return cachedSIR;
     }
     
-    public void traverse(Grid[][] grid) {
-        
+    public void setCachedSIR(double val) {
+        cachedSIR = val;
+    }
+    
+    public double x() {
+        return x;
+    }
+    
+    public double y() {
+        return y;
+    }
+    
+    public double z() {
+        return z;
     }
     
     public String toString() {

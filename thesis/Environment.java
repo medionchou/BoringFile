@@ -118,6 +118,12 @@ public class Environment {
         }
     }
     
+    /**
+     * Feed up data to Terminal and UAV.
+     * @param w - Wrapper to wrap up Random and Scanner class.
+     * @param params - argument for nextInt
+     * @param redundant - argument for nextInt
+     */
     private void seeds(Wrapper w, int params, int redundant) {
         for (int i = 0; i < terminal_num; i++) {
             x[i] = w.nextInt(params);
@@ -146,25 +152,6 @@ public class Environment {
     }
 
     public static void main(String[] args) {
-        
-        ArrayList<UAV> a = new ArrayList<>();
-        RawUAV t1 = new RawUAV(1, 1, 1, true);
-        RawUAV t2 = new RawUAV(1, 2, 1, true);
-        RawUAV t3 = new RawUAV(3, 1, 1, true);
-        RawUAV t4 = new RawUAV(1, 1, 4, true);
-        
-        a.add(t1);
-        a.add(t2);
-        a.add(t3);
-        a.add(t4);
-        
-        t1.move(0.5, 0, 0);
-        t1.move(0.5, 1, 0);
-        
-        
-        System.out.println(a.get(0));
-        System.out.println(t1);
-        
 
     }
 
