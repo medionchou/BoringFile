@@ -17,7 +17,7 @@ public class Terminal {
         this.y = y;
         this.weight = weight;
         this.uav = uav;
-        net_power = new double[uav.length];
+//        net_power = new double[uav.length];
     }
     
     public int getWeight() {
@@ -104,5 +104,8 @@ public class Terminal {
         Terminal t = new Terminal(0, 0, 0, null);
         
         System.out.println(t.angleToUAV(0, 0, 1));
+        Strategy strategy = Strategy.BACKWARD;
+        
+        System.out.println();
     }
 }

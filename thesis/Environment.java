@@ -10,10 +10,10 @@ import java.util.Scanner;
 
 public class Environment {
 
-    public final static int UAV_NUM = 50;
-    public final static int TERMINAL_NUM = 50;
-    public final static int GRID_SIZE = 50;
-    public final static int MAX_WEIGHT = 5;
+    public static final int UAV_NUM = 50;
+    public static final int TERMINAL_NUM = 50;
+    public static final int GRID_SIZE = 50;
+    public static final int MAX_WEIGHT = 5;
     
     private Grid[][] grid;
     private int[] x;
@@ -153,7 +153,7 @@ public class Environment {
     public static void main(String[] args) {
 //        Environment en = new Environment(Type.NORMAL_DISTRIBUTION);
         
-        System.out.println(Double.compare(1, 1.000));
+        System.out.println(Strategy.randomStrategy());
     }
 
 }

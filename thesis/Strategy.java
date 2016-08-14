@@ -1,10 +1,19 @@
 package thesis;
 
+import java.util.Random;
+
 public enum Strategy {
+    UP,
+    DOWN,
     FORWARD,
     BACKWARD,
-    LEFT,
     RIGHT,
-    UP,
-    DOWN
+    LEFT;
+    
+    private static final Strategy[] STRATEGY = Strategy.values();
+    private static final Random r = new Random();
+    
+    public static Strategy randomStrategy() {
+        return STRATEGY[r.nextInt(STRATEGY.length)];
+    }
 }

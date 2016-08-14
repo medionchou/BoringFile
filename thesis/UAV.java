@@ -4,11 +4,11 @@ import java.util.Iterator;
 
 public abstract class UAV {
 
-    public final static int MAX_HEIGHT = 100;
-    public final static double MOVE_MOMENT = 0.5;
-    public final static double TRANSMIT_POWER = 46;
+    public static final int MAX_HEIGHT = 100;
+    public static final double STEP = 0.5;
+    public static final double TRANSMIT_POWER = 46;
 
-    private static int ID; //for automatically increment id
+    private static int ID = 0; //for automatically increment id
     
     private int id;
     private double x;
@@ -23,12 +23,6 @@ public abstract class UAV {
         this.z = z;
         this.isOpen = isOpen;
         id = ID++;
-    }
-    
-    public void move(double x, double y, double z) {
-        this.x += x;
-        this.y += y;
-        this.z += z;
     }
     
     public void open(boolean isOpen) {
@@ -49,6 +43,35 @@ public abstract class UAV {
     
     public double z() {
         return z;
+    }
+    
+    protected void moveByStrategy(Strategy stgy) {
+        switch (stgy) {
+        case UP:
+            move(0, 0, STEP);
+            break;
+        case DOWN:
+            move(0, 0, -STEP);
+            break;
+        case FORWARD:
+            move(STEP, 0, 0);
+            break;
+        case BACKWARD:
+            move(-STEP, 0, 0);
+            break;
+        case RIGHT:
+            move(0, STEP, 0);
+            break;
+        case LEFT:
+            move(0, -STEP, 0);
+            break;
+        }
+    }
+
+    private void move(double x, double y, double z) {
+        this.x += x;
+        this.y += y;
+        this.z += z;
     }
     
     public String toString() {
