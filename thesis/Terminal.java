@@ -11,13 +11,14 @@ public class Terminal {
     private int weight;
     private UAV[] uav;
     private double[] net_power;
+    private double focused_uav_power;
     
     public Terminal(double x, double y, int weight, UAV[] uav) {
         this.x = x;
         this.y = y;
         this.weight = weight;
         this.uav = uav;
-//        net_power = new double[uav.length];
+        net_power = new double[uav.length];
     }
     
     public int getWeight() {
@@ -35,33 +36,38 @@ public class Terminal {
     @Deprecated
     public double getSIR(int uavID, double x, double y, double z) {
         double interference = collectITF(uavID);
-        net_power[uavID] = getNetPower(uav[uavID], x, y, z); 
+        net_power[uavID] = getNetPower(uav[uavID], uav[uavID].x(), uav[uavID].y(), uav[uavID].z()); // what the fuck
         
-        if (indexOfLargestPower() == uavID) return net_power[uavID] - interference;
-        else return 0.0d;
+        if (indexOfLargestPower() == uavID) {
+            return net_power[uavID] - interference;
+        }
+        else {
+            return 0.0d;
+        }
     }      
     
+    
     private int indexOfLargestPower() {
-        double largest = 0.0d;
-        int index = net_power.length;
+        double largest = Double.MIN_VALUE;
+        int index = net_power.length - 1;
         
-        for (int i = net_power.length; i >= 0; i--) {
-            if (net_power[i] > largest) {
+        for (int i = net_power.length - 1; i >= 0; i--) {
+            if (net_power[i] >= largest) {
                 largest = net_power[i];
                 index = i;
             }
         }
-        
+
         return index;        
     }
     
     private double collectITF(int uavID) {
         double itf = 0.0;
+        
         for (int i = 0; i < uav.length; i++) {
             if (i == uavID) continue;
             
-            if (net_power[i] == DEFAULT_VAL) net_power[i] = getNetPower(uav[i], 0, 0, 0);
-
+            net_power[i] = getNetPower(uav[i], uav[i].x(), uav[i].y(), uav[i].z());
             itf += net_power[i];
         }
         
@@ -78,7 +84,6 @@ public class Terminal {
         
         double distance2D = Math.hypot(x - uavX, y - uavY);
         double distance = Math.hypot(distance2D, uavZ);
-        
         
         return UAV.TRANSMIT_POWER - pathLoss(degree, distance);
     }

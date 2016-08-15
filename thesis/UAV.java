@@ -2,8 +2,6 @@ package thesis;
 
 import java.util.Iterator;
 
-import thesis.Strategy.Point;
-
 public abstract class UAV {
 
     public static final int MAX_HEIGHT = 100;
@@ -17,6 +15,8 @@ public abstract class UAV {
     private double y;
     private double z;
     private boolean isOpen;
+    
+    
 
     
     public UAV(double x, double y, double z, boolean isOpen) {
@@ -95,15 +95,16 @@ public abstract class UAV {
     }
 
     private void move(double x, double y, double z, int grid_size) {
-        if (checkBoundary(this.x + x, grid_size)) {
-            this.x += x;
-        }
-        if (checkBoundary(this.y + y, grid_size)) {
-            this.x += y;
-        }
-        if (checkBoundary(this.z + z, grid_size)) {
-            this.x += z;
-        }
+        if (checkBoundary(this.x + x, grid_size)) this.x += x;
+        if (checkBoundary(this.y + y, grid_size)) this.y += y;
+        if (checkBoundary(this.z + z, grid_size)) this.z += z; 
+    }
+    
+    public boolean checkBoundary(Point pt, int grid_size) {
+        if (pt.x < 0 || pt.x > grid_size) return false;
+        else if (pt.y < 0 || pt.y > grid_size) return false;
+        else if (pt.z < 0 || pt.z > grid_size) return false;
+        else return true;
     }
     
     private boolean checkBoundary(double coordinate, int grid_size) {
@@ -114,8 +115,6 @@ public abstract class UAV {
     public String toString() {
         return "x: " + x + " y:" + y + " z:" + z;
     }
-    
-    public abstract int[] sequence(int uavNum);
     
     public abstract void run(Grid[][] grid);
 }

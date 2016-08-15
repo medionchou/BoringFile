@@ -25,12 +25,13 @@ public class Environment {
     private int[] weight;
     private int grid_size;
     private int terminal_num;
+    private SequenceGenerator sg;
     
 
-    public Environment(String type) {
+    public Environment(String type, UAVType uavType) {
         grid_size = GRID_SIZE;
         terminal_num = TERMINAL_NUM;
-        initObj(grid_size, terminal_num);
+        initObj(grid_size, terminal_num, uavType);
         termiDtribu(type);
     }
     
@@ -54,35 +55,25 @@ public class Environment {
         }
     }
     
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        
-        sb.append("GRID_SIZE: "+grid_size + "\tTERM_NUM: " + terminal_num + "\tUAV_NUM: " + UAV_NUM + "\n\n");
-        sb.append("TERMINALS:\n");
-        sb.append("X\t\tY\t\tWEIGHT\n");
-        
-        for (int i = 0; i < terminal_num; i++) {
-            sb.append(x[i] + "\t\t" + y[i] + "\t\t" + weight[i] + "\n");
-        }
-        
-        sb.append("GRID STATUS:\n\n");
-        
-        for (int i = 0; i < grid_size; i++) {
-            for (int j = 0; j < grid_size; j++) {
-                sb.append(grid[i][j].getTermNum() + " ");
-
-            }
-            sb.append("\n");
-        }
-
-        return sb.toString();
-    }
-    
     public void simulate() {
         
+        for (int i = 0; i < 1000; i++) {
+            int[] seq = sg.sequence(UAV_NUM);
+            
+            for (int j = 0; j < seq.length; j++) {
+                uav[seq[j]].run(grid);
+            }
+        }
+        
+        
+        for (int i = 0; i < uav.length; i++) {
+            System.out.println(uav[i]);
+        }
+        
+        
     }
     
-    private void initObj(int grid_size, int terminal_num) {
+    private void initObj(int grid_size, int terminal_num, UAVType uavType) {
         grid = new Grid[grid_size][grid_size];
         x = new int[terminal_num];
         y = new int[terminal_num];
@@ -91,6 +82,16 @@ public class Environment {
         this.grid_size = grid_size;
         this.terminal_num = terminal_num;
         
+        switch (uavType) {
+        case RawUAV:
+            uav = new RawUAV[UAV_NUM];
+            for (int i = 0; i < UAV_NUM; i++) {
+                uav[i] = new RawUAV(25, 25, 0.1, true);
+            }
+            sg = RawUAV.SEQUENCE_GENERATOR;
+            break;
+        }
+  
         for (int i = 0; i < grid_size; i++) {
             for (int j = 0; j < grid_size; j++) {
                 grid[i][j] = new Grid();
@@ -150,12 +151,39 @@ public class Environment {
             grid[x[i]][y[i]].addTerminal(t);
         }
     }
+    
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        
+        sb.append("GRID_SIZE: "+grid_size + "\tTERM_NUM: " + terminal_num + "\tUAV_NUM: " + UAV_NUM + "\n\n");
+        sb.append("TERMINALS:\n");
+        sb.append("X\t\tY\t\tWEIGHT\n");
+        
+        for (int i = 0; i < terminal_num; i++) {
+            sb.append(x[i] + "\t\t" + y[i] + "\t\t" + weight[i] + "\n");
+        }
+        
+        sb.append("GRID STATUS:\n\n");
+        
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                sb.append(grid[i][j].getTermNum() + " ");
+
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
 
     public static void main(String[] args) {
-        Environment e = new Environment(NORMAL_DISTRIBUTION);
         
-        System.out.println(e.toString());
+        Environment e = new Environment(NORMAL_DISTRIBUTION, UAVType.RawUAV);
+        
+        e.simulate();
+
     }
 
 }
+
 
