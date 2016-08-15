@@ -35,7 +35,7 @@ public class Terminal {
     @Deprecated
     public double getSIR(int uavID, double x, double y, double z) {
         double interference = collectITF(uavID);
-        net_power[uavID] = getNeatPower(uav[uavID], x, y, z); 
+        net_power[uavID] = getNetPower(uav[uavID], x, y, z); 
         
         if (indexOfLargestPower() == uavID) return net_power[uavID] - interference;
         else return 0.0d;
@@ -60,7 +60,7 @@ public class Terminal {
         for (int i = 0; i < uav.length; i++) {
             if (i == uavID) continue;
             
-            if (net_power[i] == DEFAULT_VAL) net_power[i] = getNeatPower(uav[i], 0, 0, 0);
+            if (net_power[i] == DEFAULT_VAL) net_power[i] = getNetPower(uav[i], 0, 0, 0);
 
             itf += net_power[i];
         }
@@ -68,7 +68,7 @@ public class Terminal {
         return itf;
     }
     
-    private double getNeatPower(UAV uav, double x, double y, double z) {
+    private double getNetPower(UAV uav, double x, double y, double z) {
         double uavX = uav.x() + x;
         double uavY = uav.y() + y;
         double uavZ = uav.z() + z;

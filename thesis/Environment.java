@@ -10,12 +10,16 @@ import java.util.Scanner;
 
 public class Environment {
 
-    public static final int UAV_NUM = 50;
+    public static final int UAV_NUM = 20;
     public static final int TERMINAL_NUM = 50;
     public static final int GRID_SIZE = 50;
     public static final int MAX_WEIGHT = 5;
+    public static final String NORMAL_DISTRIBUTION = "NORMAL_DISTRIBUTION";
+    public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
+    
     
     private Grid[][] grid;
+    private UAV[] uav;
     private int[] x;
     private int[] y;
     private int[] weight;
@@ -23,16 +27,12 @@ public class Environment {
     private int terminal_num;
     
 
-    public Environment(Type type) {
+    public Environment(String type) {
         grid_size = GRID_SIZE;
         terminal_num = TERMINAL_NUM;
-        initSetting(type);
+        initObj(grid_size, terminal_num);
+        termiDtribu(type);
     }
-    
-    public Environment(String file) {
-        read_file(file);
-    }
-    
     
     public void exportFile(String filename) {
         if (filename.length() == 0) return;
@@ -77,62 +77,10 @@ public class Environment {
 
         return sb.toString();
     }
-
-
-    private void initSetting(Type type) {
-
-        switch (type) {
-        case NORMAL_DISTRIBUTION:
-            normal_distribution();
-            break;
-        case POISSON_DISTRIBUTION:
-            poisson_distrbution();
-            break;
-        }
-    }
-
-    private void normal_distribution() {
-        Random r = new Random();
-      
-        initObj(grid_size, terminal_num);
-        
-        seeds(new RandomWrapper(r), grid_size, MAX_WEIGHT);
-    }
-
-    private void poisson_distrbution() {
-        initObj(grid_size, terminal_num);
+    
+    public void simulate() {
         
     }
-    
-    private void read_file(String filename) {
-        try {
-            Scanner sc = new Scanner(new File(filename));
-            grid_size = sc.nextInt();
-            terminal_num = sc.nextInt();
-            initObj(grid_size, terminal_num);
-            seeds(new ScannerWrapper(sc), 10, 10);      
-            sc.close();
-        } catch(IOException e) {
-            System.out.println(e.toString());
-        }
-    }
-    
-    /**
-     * Feed up data to Terminal and UAV.
-     * @param w - Wrapper to wrap up Random and Scanner class.
-     * @param params - argument for nextInt
-     * @param redundant - argument for nextInt
-     */
-    private void seeds(Wrapper w, int params, int redundant) {
-        for (int i = 0; i < terminal_num; i++) {
-            x[i] = w.nextInt(params);
-            y[i] = w.nextInt(params);
-            weight[i] = w.nextInt(redundant);
-            Terminal t = new Terminal(x[i], y[i], weight[i], null);
-            grid[x[i]][y[i]].addTerminal(t);
-        }
-    }
-    
     
     private void initObj(int grid_size, int terminal_num) {
         grid = new Grid[grid_size][grid_size];
@@ -150,10 +98,63 @@ public class Environment {
         }
     }
 
-    public static void main(String[] args) {
-//        Environment en = new Environment(Type.NORMAL_DISTRIBUTION);
+    private void termiDtribu(String type) {
+        switch (type) {
+        case NORMAL_DISTRIBUTION:
+            normal_distribution();
+            break;
+        case POISSON_DISTRIBUTION:
+            poisson_distrbution();
+            break;
+        default:
+            read_file(type);
+            break;
+        }
+    }
+
+    private void normal_distribution() {
+        Random r = new Random();
+        seeds(new RandomWrapper(r), grid_size, MAX_WEIGHT);
+    }
+
+    private void poisson_distrbution() {
         
-        System.out.println(Strategy.randomStrategy());
+    }
+    
+    private void read_file(String filename) {
+        try {
+            Scanner sc = new Scanner(new File(filename));
+            grid_size = sc.nextInt();
+            terminal_num = sc.nextInt();
+            seeds(new ScannerWrapper(sc), 10, 10);      
+            sc.close();
+        } catch(IOException e) {
+            System.out.println(e.toString());
+        }
+    }
+    
+    
+    /**
+     * Feed up data to Terminal and UAV.
+     * @param w - Wrapper to wrap up Random and Scanner class.
+     * @param params - argument for nextInt
+     * @param redundant - argument for nextInt
+     */
+    private void seeds(Wrapper w, int params, int redundant) {
+        
+        for (int i = 0; i < terminal_num; i++) {
+            x[i] = w.nextInt(params);
+            y[i] = w.nextInt(params);
+            weight[i] = w.nextInt(redundant);
+            Terminal t = new Terminal(x[i], y[i], weight[i], uav);
+            grid[x[i]][y[i]].addTerminal(t);
+        }
+    }
+
+    public static void main(String[] args) {
+        Environment e = new Environment(NORMAL_DISTRIBUTION);
+        
+        System.out.println(e.toString());
     }
 
 }

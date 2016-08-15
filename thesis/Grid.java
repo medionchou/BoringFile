@@ -20,7 +20,13 @@ public class Grid {
     }
     
     public Iterator<Terminal> getTerminals() {
-        return terminalList.iterator();
+        if (terminal_num == 0) throw new NullPointerException("No terminal within this grid");
+        else return terminalList.iterator();
+    }
+    
+    public Terminal getTerminal() {
+        if (terminal_num == 0) throw new NullPointerException("No terminal within this grid");
+        else return terminalList.get(0);
     }
     
     public int getTermNum() {
