@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
-
 /**
  * 
  * @author Medion-PC
@@ -14,6 +13,7 @@ public class RawUAV extends UAV {
 
     private double last_profit;
     private Strategy last_move;
+    private int term_num;
     
     public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -47,10 +47,12 @@ public class RawUAV extends UAV {
         int si_deno = 0;
         double si_no = 0.0d;
         
+        term_num = 0;
+        
         for (int i = 0; i < grid_size; i++) {
             for (int j = 0; j < grid_size; j++) {
-                int termNum = grid[i][j].getTermNum();
                 double sir = 0.0d;
+                int termNum = grid[i][j].getTermNum();
                 
                 if (termNum == 0) continue;
                 
@@ -58,25 +60,21 @@ public class RawUAV extends UAV {
                 Point p = strategyToPoint(last_move);
                 sir = t.getSIR(getID(), p.x + x(), p.y + y(), p.z + z());
                 
-                if (sir != 0) {
+                if (sir > 0) {
                     si_no += UAV.ld(sir) * termNum;
                     si_deno += termNum;
+                    term_num++;
                 }
             }
         }
         if (si_deno != 0) {
             double si = si_no / si_deno;
+            if (last_profit >= si) last_move = randomStrategy(grid_size);
             
-            if (last_profit < si) {
-                if (si > 4.0d) last_profit = 4;
-                else last_profit = si;
-            } else {
-                last_move = randomStrategy(grid_size);
-                last_profit = si;
-            }
-        } else {
-            last_move = Strategy.randomStrategy();
-        }
+            last_profit = si;
+        } 
+        else last_move = Strategy.randomStrategy();
+        
         
         moveByStrategy(last_move, grid_size);
     }
@@ -84,19 +82,14 @@ public class RawUAV extends UAV {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         
-        sb.append("x: " + x() + " y:" + y() + " z:" + z() + "\n");
+        sb.append("id:" + getID() + " x: " + String.format("%.2f", x())  + " y:" + String.format("%.2f", y()) + " z:" + String.format("%.2f", z()) + "\n");
         sb.append("Profit: " + last_profit);
         
         return sb.toString();
     }
     
-    
-    private double utility() {
-        return 0;
-    }
-    
     /**
-     * Only return available Strategy which doesn't cause fly out of bound.
+     * Only return available Strategies which don't cause moving out of bound.
      * @param grid_size
      * @return one strategy from Enum Strategy
      */
@@ -114,8 +107,14 @@ public class RawUAV extends UAV {
         return tmp.get(r.nextInt(tmp.size()));
     }
     
-    
-    public static void main(String[] args) {
+    @Override
+    public int getAssociatedTerm() {
+        return term_num;
     }
 
+    
+    public static void main(String[] args) {
+        System.out.println(Double.MIN_VALUE);
+    }
 }
+

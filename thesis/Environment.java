@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -32,7 +33,7 @@ public class Environment {
         grid_size = GRID_SIZE;
         terminal_num = TERMINAL_NUM;
         initObj(grid_size, terminal_num, uavType);
-        termiDtribu(type);
+        distribute(type);
     }
     
     public void exportFile(String filename) {
@@ -57,20 +58,28 @@ public class Environment {
     
     public void simulate() {
         
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10000; i++) {
             int[] seq = sg.sequence(UAV_NUM);
             
             for (int j = 0; j < seq.length; j++) {
                 uav[seq[j]].run(grid);
             }
-        }
-        
+        }        
         
         for (int i = 0; i < uav.length; i++) {
             System.out.println(uav[i]);
         }
         
-        
+//        for (int i = 0; i < grid_size; i++) {
+//            for (int j = 0; j < grid_size; j++) {
+//                if (grid[i][j].getTermNum() == 0) continue;
+//                for (Iterator<Terminal> t = grid[i][j].getTerminals(); t.hasNext();) {
+//                    Terminal term = t.next();
+//                    System.out.println(term.associatedUAV());
+//                }
+//            }
+//        }
+
     }
     
     private void initObj(int grid_size, int terminal_num, UAVType uavType) {
@@ -90,6 +99,8 @@ public class Environment {
             }
             sg = RawUAV.SEQUENCE_GENERATOR;
             break;
+        case GameModelUAV:
+            break;
         }
   
         for (int i = 0; i < grid_size; i++) {
@@ -99,7 +110,7 @@ public class Environment {
         }
     }
 
-    private void termiDtribu(String type) {
+    private void distribute(String type) {
         switch (type) {
         case NORMAL_DISTRIBUTION:
             normal_distribution();
@@ -175,13 +186,33 @@ public class Environment {
 
         return sb.toString();
     }
+    public static int poisson(double lambda) {
+        if (!(lambda > 0.0))
+            throw new IllegalArgumentException("Parameter lambda must be positive");
+        if (Double.isInfinite(lambda))
+            throw new IllegalArgumentException("Parameter lambda must not be infinite");
+        // using algorithm given by Knuth
+        // see http://en.wikipedia.org/wiki/Poisson_distribution
+        Random r = new Random();
+        int k = 0;
+        double p = 1.0;
+        double L = Math.exp(-lambda);
+        do {
+            k++;
+            p *= r.nextDouble();
+        } while (p >= L);
+        
+        return k-1;
+    }
 
     public static void main(String[] args) {
         
-        Environment e = new Environment(NORMAL_DISTRIBUTION, UAVType.RawUAV);
+//        Environment e = new Environment(NORMAL_DISTRIBUTION, UAVType.RawUAV);
+//        
+//        e.simulate();
         
-        e.simulate();
-
+        System.out.println(poisson(0.1));
+  
     }
 
 }

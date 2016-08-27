@@ -50,7 +50,9 @@ public abstract class UAV {
     public static double ld(double sir) {
         double result = Math.log(sir + 1) / Math.log(2);
         
-        return result < 0.1 ? 0 : result;
+        if (result < 0.1) return 0;
+        else if (result > 4) return 4;
+        else return result;
     }
     
     protected void moveByStrategy(Strategy stgy, int grid_size) {
@@ -115,6 +117,8 @@ public abstract class UAV {
     public String toString() {
         return "x: " + x + " y:" + y + " z:" + z;
     }
+    
+    public abstract int getAssociatedTerm();
     
     public abstract void run(Grid[][] grid);
 }

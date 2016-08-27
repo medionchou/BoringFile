@@ -1,5 +1,6 @@
 package thesis;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 public class Terminal {
@@ -10,15 +11,17 @@ public class Terminal {
     private double y;
     private int weight;
     private UAV[] uav;
-    private double[] net_power;
-    private double focused_uav_power;
+    private double[] net_power; //cache power value for speeding up calculation.
+    private int associatedUAVID; //for debug.
     
     public Terminal(double x, double y, int weight, UAV[] uav) {
         this.x = x;
         this.y = y;
         this.weight = weight;
         this.uav = uav;
+        associatedUAVID = -1;
         net_power = new double[uav.length];
+        Arrays.fill(net_power, -1);
     }
     
     public int getWeight() {
@@ -39,13 +42,20 @@ public class Terminal {
         net_power[uavID] = getNetPower(uav[uavID], uav[uavID].x(), uav[uavID].y(), uav[uavID].z()); // what the fuck
         
         if (indexOfLargestPower() == uavID) {
-            return net_power[uavID] - interference;
+            associatedUAVID = uavID;
+            double tmp = net_power[uavID];
+            net_power[uavID] = -1; // reset power of uavID because we don't know if UAV really take this move.
+            return tmp / interference ;
         }
         else {
+            net_power[uavID] = -1; // reset power of uavID because we don't know if UAV really take this move.
             return 0.0d;
         }
     }      
     
+    public int associatedUAV() {
+        return associatedUAVID;
+    }
     
     private int indexOfLargestPower() {
         double largest = Double.MIN_VALUE;
@@ -61,19 +71,26 @@ public class Terminal {
         return index;        
     }
     
+    /**
+     * Collect all interference except uavID.
+     * @param uavID
+     * @return
+     */
     private double collectITF(int uavID) {
         double itf = 0.0;
         
         for (int i = 0; i < uav.length; i++) {
             if (i == uavID) continue;
             
-            net_power[i] = getNetPower(uav[i], uav[i].x(), uav[i].y(), uav[i].z());
+            if (net_power[i] == -1) net_power[i] = getNetPower(uav[i], uav[i].x(), uav[i].y(), uav[i].z());
+            
             itf += net_power[i];
         }
         
         return itf;
     }
     
+    // power unit in miliWatt
     private double getNetPower(UAV uav, double x, double y, double z) {
         double uavX = uav.x() + x;
         double uavY = uav.y() + y;
@@ -85,7 +102,15 @@ public class Terminal {
         double distance2D = Math.hypot(x - uavX, y - uavY);
         double distance = Math.hypot(distance2D, uavZ);
         
-        return UAV.TRANSMIT_POWER - pathLoss(degree, distance);
+        /**
+         * pathloss = Pt / Pr = log_10(Pt) - log_10(Pr)
+         * therefore, log_10(Pr)(dBm) = log_10(Pt)(dBm) - pathloss
+         */
+        return dBmToMiliWatt(UAV.TRANSMIT_POWER - pathLoss(degree, distance));
+    }
+    
+    private double dBmToMiliWatt(double dBm) {
+        return Math.pow(10, dBm / 10);
     }
     
     private double pathLoss(double degree, double distance) {
@@ -108,9 +133,6 @@ public class Terminal {
     public static void main(String[] args) {
         Terminal t = new Terminal(0, 0, 0, null);
         
-        System.out.println(t.angleToUAV(0, 0, 1));
-        Strategy strategy = Strategy.BACKWARD;
-        
-        System.out.println();
+        System.out.println(t.dBmToMiliWatt(-0.1));
     }
 }

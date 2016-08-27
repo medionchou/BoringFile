@@ -1,5 +1,6 @@
 package thesis;
 
 public enum UAVType {
-    RawUAV
+    RawUAV,
+    GameModelUAV
 }
