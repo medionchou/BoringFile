@@ -3,6 +3,7 @@ package thesis;
 import java.util.Random;
 
 public enum Strategy {
+    STILL,
     UP,
     DOWN,
     FORWARD,
@@ -19,3 +20,5 @@ public enum Strategy {
     }
     
 }
+
+

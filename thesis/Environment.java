@@ -5,18 +5,26 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
+
+import edu.princeton.cs.algs4.StdRandom;
+import javafx.scene.effect.Lighting;
 
 
 public class Environment {
 
     public static final int UAV_NUM = 20;
-    public static final int TERMINAL_NUM = 50;
-    public static final int GRID_SIZE = 50;
+    public static final int TERMINAL_NUM = 350;
+    public static final int GRID_SIZE = 60;
     public static final int MAX_WEIGHT = 5;
-    public static final String NORMAL_DISTRIBUTION = "NORMAL_DISTRIBUTION";
+    public static final int MAX_HEIGHT = 3;
+    public static final int TRANSMIT_POWER = 46;
+    public static final double STEP = 0.1;
+    public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
     public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
+    public static final String UAV_RANDOM = "UAV_RANDOM";
     
     
     private Grid[][] grid;
@@ -29,14 +37,16 @@ public class Environment {
     private SequenceGenerator sg;
     
 
-    public Environment(String type, UAVType uavType) {
+    public Environment(String type, String uavDistri, UAVType uavType) {
         grid_size = GRID_SIZE;
         terminal_num = TERMINAL_NUM;
-        initObj(grid_size, terminal_num, uavType);
-        distribute(type);
+        initTerms(type);
+        initUAV(uavDistri, uavType);
+        bindUAVtoTerm();
     }
     
     public void exportFile(String filename) {
+        if (filename == null) throw new NullPointerException("File name can't be null.");
         if (filename.length() == 0) return;
         
         try {
@@ -57,7 +67,6 @@ public class Environment {
     }
     
     public void simulate() {
-        
         for (int i = 0; i < 10000; i++) {
             int[] seq = sg.sequence(UAV_NUM);
             
@@ -66,54 +75,39 @@ public class Environment {
             }
         }        
         
+        double avs = 0d;
+        double tmp;
         for (int i = 0; i < uav.length; i++) {
             System.out.println(uav[i]);
+            tmp = uav[i].getSpectrum(grid);
+            System.out.println("Spectrum: " + tmp);
+            avs += tmp;
         }
         
-//        for (int i = 0; i < grid_size; i++) {
-//            for (int j = 0; j < grid_size; j++) {
-//                if (grid[i][j].getTermNum() == 0) continue;
-//                for (Iterator<Terminal> t = grid[i][j].getTerminals(); t.hasNext();) {
-//                    Terminal term = t.next();
-//                    System.out.println(term.associatedUAV());
-//                }
-//            }
-//        }
-
+        System.out.println(avs / TERMINAL_NUM);
     }
     
-    private void initObj(int grid_size, int terminal_num, UAVType uavType) {
-        grid = new Grid[grid_size][grid_size];
-        x = new int[terminal_num];
-        y = new int[terminal_num];
-        weight = new int[terminal_num];
-        
-        this.grid_size = grid_size;
-        this.terminal_num = terminal_num;
-        
+    private void initUAV(String uavDistri, UAVType uavType) {
+        if (uavDistri == null || uavType == null) throw new NullPointerException("Arguments can't be null");
+        Point[] pt = getPoints(uavDistri);
+        uav = new UAV[pt.length];
         switch (uavType) {
         case RawUAV:
-            uav = new RawUAV[UAV_NUM];
-            for (int i = 0; i < UAV_NUM; i++) {
-                uav[i] = new RawUAV(25, 25, 0.1, true);
+            for (int i = 0; i < uav.length; i++) {
+                uav[i] = new RawUAV(pt[i].x, pt[i].y, pt[i].z, true);
             }
             sg = RawUAV.SEQUENCE_GENERATOR;
             break;
         case GameModelUAV:
             break;
         }
-  
-        for (int i = 0; i < grid_size; i++) {
-            for (int j = 0; j < grid_size; j++) {
-                grid[i][j] = new Grid();
-            }
-        }
     }
-
-    private void distribute(String type) {
+    
+    private void initTerms(String type) {
+        
         switch (type) {
         case NORMAL_DISTRIBUTION:
-            normal_distribution();
+            uniform_distribution();
             break;
         case POISSON_DISTRIBUTION:
             poisson_distrbution();
@@ -123,14 +117,112 @@ public class Environment {
             break;
         }
     }
+    
+    private Point[] getPoints(String uavDistri) {
+        Point[] pt = null;
+        switch (uavDistri) {
+        case UAV_RANDOM:
+            Random r = new Random();
+            pt = new Point[UAV_NUM];
+            
+            for (int i = 0; i < UAV_NUM; i++) {
+                pt[i] = new Point(r.nextDouble() * grid_size, r.nextDouble() * grid_size, r.nextDouble() * MAX_HEIGHT);
+            }
+            break;
+        default:
+            try {
+                Scanner sc = new Scanner(new File(uavDistri));
+                pt = new Point[sc.nextInt()];
+                
+                for (int i = 0; i < pt.length; i++) {
+                    pt[i] = new Point(sc.nextDouble(), sc.nextDouble(), sc.nextDouble());
+                }
+                sc.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            break;
+        }
+        
+        return pt;
+    }
+    
+    private void bindUAVtoTerm() {
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                if (grid[i][j].getTermNum() == 0) continue;
+                
+                for (Iterator<Terminal> it = grid[i][j].getTerminals(); it.hasNext(); ) {
+                    Terminal t = it.next();
+                    t.setUAV(uav);
+                }
+            }
+        }
+    }
 
-    private void normal_distribution() {
+    private void uniform_distribution() {
         Random r = new Random();
-        seeds(new RandomWrapper(r), grid_size, MAX_WEIGHT);
+        initGrids(grid_size, terminal_num);
+        
+        for (int i = 0; i < terminal_num; i++) {
+            x[i] = r.nextInt(grid_size);
+            y[i] = r.nextInt(grid_size);
+            weight[i] = r.nextInt(MAX_HEIGHT);
+            Terminal t = new Terminal(x[i], y[i], weight[i]);
+            grid[x[i]][y[i]].addTerminal(t);
+        }
     }
 
     private void poisson_distrbution() {
+        grid = new Grid[grid_size][grid_size];
+        Random r = new Random();
+        ArrayList<Integer> xList = new ArrayList<>();
+        ArrayList<Integer> yList = new ArrayList<>();
+        ArrayList<Integer> weightList = new ArrayList<>();
         
+        terminal_num = 0;
+        int tmp = 0;
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                tmp = poisson(0.1);
+                terminal_num += tmp;
+                grid[i][j] = new Grid();
+                for (int k = 0; k < tmp; k++) {
+                    int random = r.nextInt(MAX_HEIGHT);
+                    Terminal t = new Terminal(i, j, random);
+                    xList.add(i);
+                    yList.add(j);
+                    weightList.add(random);
+                    grid[i][j].addTerminal(t);
+                }
+            }
+        } 
+        
+        x = new int[terminal_num];
+        y = new int[terminal_num];
+        weight = new int[terminal_num];
+        convertToPrimitive(x, xList);
+        convertToPrimitive(y, yList);
+        convertToPrimitive(weight, weightList);
+    }
+    
+    private void convertToPrimitive(int[] arr, ArrayList<Integer> list) {
+        for (int i = 0; i < list.size(); i++) {
+            arr[i] = list.get(i);
+        }
+    }
+    
+    private void initGrids(int grid_size, int terminal_num) {
+        grid = new Grid[grid_size][grid_size];
+        x = new int[terminal_num];
+        y = new int[terminal_num];
+        weight = new int[terminal_num];
+        
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                grid[i][j] = new Grid();
+            }
+        }
     }
     
     private void read_file(String filename) {
@@ -138,54 +230,20 @@ public class Environment {
             Scanner sc = new Scanner(new File(filename));
             grid_size = sc.nextInt();
             terminal_num = sc.nextInt();
-            seeds(new ScannerWrapper(sc), 10, 10);      
+            initGrids(grid_size, terminal_num);
+            
+            for (int i = 0; i < terminal_num; i++) {
+                x[i] = sc.nextInt();
+                y[i] = sc.nextInt();
+                weight[i] = sc.nextInt();
+                Terminal t = new Terminal(x[i], y[i], weight[i]);                
+            }
             sc.close();
         } catch(IOException e) {
             System.out.println(e.toString());
         }
     }
     
-    
-    /**
-     * Feed up data to Terminal and UAV.
-     * @param w - Wrapper to wrap up Random and Scanner class.
-     * @param params - argument for nextInt
-     * @param redundant - argument for nextInt
-     */
-    private void seeds(Wrapper w, int params, int redundant) {
-        
-        for (int i = 0; i < terminal_num; i++) {
-            x[i] = w.nextInt(params);
-            y[i] = w.nextInt(params);
-            weight[i] = w.nextInt(redundant);
-            Terminal t = new Terminal(x[i], y[i], weight[i], uav);
-            grid[x[i]][y[i]].addTerminal(t);
-        }
-    }
-    
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        
-        sb.append("GRID_SIZE: "+grid_size + "\tTERM_NUM: " + terminal_num + "\tUAV_NUM: " + UAV_NUM + "\n\n");
-        sb.append("TERMINALS:\n");
-        sb.append("X\t\tY\t\tWEIGHT\n");
-        
-        for (int i = 0; i < terminal_num; i++) {
-            sb.append(x[i] + "\t\t" + y[i] + "\t\t" + weight[i] + "\n");
-        }
-        
-        sb.append("GRID STATUS:\n\n");
-        
-        for (int i = 0; i < grid_size; i++) {
-            for (int j = 0; j < grid_size; j++) {
-                sb.append(grid[i][j].getTermNum() + " ");
-
-            }
-            sb.append("\n");
-        }
-
-        return sb.toString();
-    }
     public static int poisson(double lambda) {
         if (!(lambda > 0.0))
             throw new IllegalArgumentException("Parameter lambda must be positive");
@@ -207,14 +265,14 @@ public class Environment {
 
     public static void main(String[] args) {
         
-//        Environment e = new Environment(NORMAL_DISTRIBUTION, UAVType.RawUAV);
-//        
-//        e.simulate();
+        Environment e = new Environment(POISSON_DISTRIBUTION, "uavConfig.txt", UAVType.RawUAV);
         
-        System.out.println(poisson(0.1));
-  
-    }
+        e.simulate();
 
+//        System.out.println(RawUAV.class.getSimpleName());
+        
+    }
+       
 }
 
 
