@@ -44,23 +44,23 @@ public abstract class UAV {
     }
     
     public static double ld(double sir) {
-        double result = Math.log(sir + 1) / Math.log(2);
-        
+        double result = Math.log10(sir + 1) / Math.log10(2);
+ 
         if (result < 0.1) return 0;
         else if (result > 4) return 4;
         else return result;
     }
     
-    protected void moveByStrategy(Strategy stgy, int grid_size) {
+    protected void moveByStrategy(Strategy stgy, int grid_size, double bias) {
         switch (stgy) {
         case STILL:
             break;
         case UP:
-            move(0, 0, Environment.STEP * 0.1, Environment.MAX_HEIGHT);
+            move(0, 0, Environment.STEP * bias, Environment.MAX_HEIGHT);
             break;
         case DOWN:
-            move(0, 0, -Environment.STEP * 0.1, Environment.MAX_HEIGHT);
-            break;
+            move(0, 0, -Environment.STEP * bias, Environment.MAX_HEIGHT);
+            break; 
         case FORWARD:
             move(0, -Environment.STEP, 0, grid_size);
             break;
@@ -76,14 +76,14 @@ public abstract class UAV {
         }
     }
     
-    public static Point strategyToPoint(Strategy stgy) {
+    public static Point strategyToPoint(Strategy stgy, double bias) {
         switch (stgy) {
-//        case STILL:
-//            return new Point(0, 0, 0);
+        case STILL:
+            return new Point(0, 0, 0);
         case UP:
-            return new Point(0, 0, Environment.STEP * 0.1);
+            return new Point(0, 0, Environment.STEP * bias);
         case DOWN:
-            return new Point(0, 0, -Environment.STEP * 0.1);
+            return new Point(0, 0, -Environment.STEP * bias);
         case FORWARD:
             return new Point(0, -Environment.STEP, 0);
         case BACKWARD:
@@ -118,7 +118,7 @@ public abstract class UAV {
         return "x: " + x + " y:" + y + " z:" + z;
     }
     
-    public abstract double getSpectrum(Grid[][] grid);
+    public abstract double[] getSpectrumAndTerms(Grid[][] grid);
     
     public abstract void run(Grid[][] grid);
 }

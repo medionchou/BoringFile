@@ -2,6 +2,8 @@ package thesis;
 
 import java.util.Arrays;
 
+import edu.princeton.cs.algs4.StdStats;
+
 public class Terminal {
     
     public final static double DEFAULT_VAL = 0.0d;
@@ -40,9 +42,31 @@ public class Terminal {
         double interference = collectITF(uavID);
         net_power[uavID] = getNetPower(uav[uavID], mx, my, mz); // what the fuck
         
+//        
+//        if ((net_power[uavID] / interference) > 1) {
+//            System.out.println("Logger test: ");
+//            System.out.println("Interence: " + interference);
+//            System.out.println("effective power: " + net_power[uavID]);
+//            System.out.println(net_power[uavID] / interference);
+//            System.out.println();
+//        }
+        
+        
         if (indexOfLargestPower() == uavID) {
+            
+            
+//            System.out.println("\n**** Test table ****\n");
+//            System.out.println("ID: " + uavID);
+//            for (int i = 0; i < net_power.length; i++)
+//                System.out.println("ID: " + i + " " + net_power[i]);
+//
+//            System.out.println("Largest index: " + indexOfLargestPower());
+//            System.out.println(net_power[uavID] / interference + " " + net_power[uavID] + " " + interference);
+//            System.out.println("\n*** END table ***\n");            
+//            
             double tmp = net_power[uavID];
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
+
             return tmp / interference ;
         }
         else {
@@ -104,7 +128,7 @@ public class Terminal {
     private double getNetPower(UAV uav, double mx, double my, double mz) {
         double uavX = uav.x() + mx;
         double uavY = uav.y() + my;
-        double uavZ = (uav.z() + mz) < 0 ? 0 : uav.z() + mz;
+        double uavZ = (uav.z() + mz) < 0 ? 0.1 : uav.z() + mz;
         double degree = angleToUAV(uavX, uavY, uavZ);
         
         if (degree < 0) {
@@ -119,20 +143,41 @@ public class Terminal {
          * pathloss = Pt / Pr = log_10(Pt) - log_10(Pr)
          * therefore, log_10(Pr)(dBm) = log_10(Pt)(dBm) - pathloss
          */
-        return dBmToMiliWatt(Environment.TRANSMIT_POWER - pathLoss(degree, distance));
+        return dBmToMiliWatt(Environment.TRANSMIT_POWER - pathLoss(degree, distance)/*, 
+                pathLoss(degree, distance), degree, distance, distance2D, uavX, uavY, uavZ,
+                x, y, uav.z(), mz*/);
     }
     
-    private double dBmToMiliWatt(double dBm) {
+    private double dBmToMiliWatt(double dBm/*, double pl, double degree, double distance, double distance2D, double uavX, double uavY, double uavZ,
+            double x, double y, double uavz, double mz*/) {
+//        if (Double.isInfinite(res)) {
+//            System.out.println("\n\n**** Here is the test ****");
+//            System.out.println("PL: " + pl);
+//            System.out.println("degree: " +degree);
+//            System.out.println("distance: " +distance);
+//            System.out.println("distance2D: " +distance2D);
+//            System.out.println("uavX: " +uavX);
+//            System.out.println("uavY: " +uavY);
+//            System.out.println("uavZ: " +uavZ);
+//            System.out.println("x: " +x);
+//            System.out.println("y: " +y);
+//            System.out.println("dbm: " +dBm);
+//            System.out.println("uavz: " +uavz);
+//            System.out.println("mz: " +mz);
+//            System.out.println("**** End Of test ****");
+//        }
         return Math.pow(10, dBm / 10);
     }
     
     private double pathLoss(double degree, double distance) {
         if (degree > 90 || degree < 0) throw new IllegalArgumentException("degree outside of desired range 0 - 90");
         
-        if (degree >= 0 || degree < 10) 
-            return 98.4 + Math.log(distance) + ((2.55 + degree) / (0.0594 + 0.0406 * degree));
-        else 
-            return 98.4 + Math.log(distance) + ((-94.2 + degree) / (-3.44 + 0.0318 * degree));
+        if (degree >= 0 && degree < 10) 
+            return 98.4 + 20 * Math.log10(distance) + ((2.55 + degree) / (0.0594 + 0.0406 * degree));
+        else if (degree >= 10 && degree <= 90)
+            return 98.4 + 20 * Math.log10(distance) + ((-94.2 + degree) / (-3.44 + 0.0318 * degree));
+        else
+            throw new IllegalArgumentException("Invalid argument");
     }
     
     private double angleToUAV(double uavX, double uavY, double uavZ) {
@@ -145,6 +190,11 @@ public class Terminal {
     }
     
     public static void main(String[] args) {
+        
+        int[] a = {31, 22, 2, 27, 1, 23, 13, 23, 25, 2, 9, 12, 26, 1, 25, 24, 26, 25, 23, 28};
+        
+        double res = Math.sqrt(StdStats.var(a) * (19) / 20);
 
+        System.out.println(res);
     }
 }

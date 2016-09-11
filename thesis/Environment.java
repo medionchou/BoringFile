@@ -9,7 +9,9 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 
+import edu.princeton.cs.algs4.Merge;
 import edu.princeton.cs.algs4.StdRandom;
+import edu.princeton.cs.algs4.StdStats;
 import javafx.scene.effect.Lighting;
 
 
@@ -20,7 +22,7 @@ public class Environment {
     public static final int GRID_SIZE = 60;
     public static final int MAX_WEIGHT = 5;
     public static final int MAX_HEIGHT = 3;
-    public static final int TRANSMIT_POWER = 46;
+    public static final double TRANSMIT_POWER = 46;
     public static final double STEP = 0.1;
     public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
     public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
@@ -76,16 +78,21 @@ public class Environment {
         }        
         
         double avs = 0d;
-        double tmp;
+        double res[];
+        double[] term_dist = new double[uav.length];
         for (int i = 0; i < uav.length; i++) {
             System.out.println(uav[i]);
-            tmp = uav[i].getSpectrum(grid);
-            System.out.println("Spectrum: " + tmp);
-            avs += tmp;
+            res = uav[i].getSpectrumAndTerms(grid);
+            System.out.println("Spectrum: " + res[0] + "\n");
+            avs += res[0];
+            term_dist[i] = res[1];
         }
-        
-        System.out.println(avs / TERMINAL_NUM);
+        System.out.println("Standard deviation: " + StdStats.stddev(term_dist));
+        System.out.println("Total Average Spectral Efficiency: " + avs / terminal_num);
+        System.out.println("Terminal num: " + terminal_num);
     }
+    
+    
     
     private void initUAV(String uavDistri, UAVType uavType) {
         if (uavDistri == null || uavType == null) throw new NullPointerException("Arguments can't be null");
@@ -116,6 +123,30 @@ public class Environment {
             read_file(type);
             break;
         }
+    }
+    
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        
+        sb.append("GRID_SIZE: "+grid_size + "\tTERM_NUM: " + terminal_num + "\tUAV_NUM: " + UAV_NUM + "\n\n");
+        sb.append("TERMINALS:\n");
+        sb.append("X\t\tY\t\tWEIGHT\n");
+        
+        for (int i = 0; i < terminal_num; i++) {
+            sb.append(x[i] + "\t\t" + y[i] + "\t\t" + weight[i] + "\n");
+        }
+        
+        sb.append("GRID STATUS:\n\n");
+        
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                sb.append(grid[i][j].getTermNum() + " ");
+
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
     }
     
     private Point[] getPoints(String uavDistri) {
@@ -184,7 +215,7 @@ public class Environment {
         int tmp = 0;
         for (int i = 0; i < grid_size; i++) {
             for (int j = 0; j < grid_size; j++) {
-                tmp = poisson(0.1);
+                tmp = StdRandom.poisson(0.1);
                 terminal_num += tmp;
                 grid[i][j] = new Grid();
                 for (int k = 0; k < tmp; k++) {
@@ -228,49 +259,28 @@ public class Environment {
     private void read_file(String filename) {
         try {
             Scanner sc = new Scanner(new File(filename));
-            grid_size = sc.nextInt();
             terminal_num = sc.nextInt();
+            grid_size = sc.nextInt();
             initGrids(grid_size, terminal_num);
             
             for (int i = 0; i < terminal_num; i++) {
                 x[i] = sc.nextInt();
                 y[i] = sc.nextInt();
                 weight[i] = sc.nextInt();
-                Terminal t = new Terminal(x[i], y[i], weight[i]);                
+                Terminal t = new Terminal(x[i], y[i], weight[i]);    
+                grid[x[i]][y[i]].addTerminal(t);
             }
             sc.close();
         } catch(IOException e) {
             System.out.println(e.toString());
         }
     }
-    
-    public static int poisson(double lambda) {
-        if (!(lambda > 0.0))
-            throw new IllegalArgumentException("Parameter lambda must be positive");
-        if (Double.isInfinite(lambda))
-            throw new IllegalArgumentException("Parameter lambda must not be infinite");
-        // using algorithm given by Knuth
-        // see http://en.wikipedia.org/wiki/Poisson_distribution
-        Random r = new Random();
-        int k = 0;
-        double p = 1.0;
-        double L = Math.exp(-lambda);
-        do {
-            k++;
-            p *= r.nextDouble();
-        } while (p >= L);
-        
-        return k-1;
-    }
 
     public static void main(String[] args) {
         
-        Environment e = new Environment(POISSON_DISTRIBUTION, "uavConfig.txt", UAVType.RawUAV);
+        Environment e = new Environment("poisson_distribute.txt", "uavConfig.txt", UAVType.RawUAV);
         
-        e.simulate();
-
-//        System.out.println(RawUAV.class.getSimpleName());
-        
+        e.simulate(); 
     }
        
 }

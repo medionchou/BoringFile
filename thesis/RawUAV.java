@@ -13,6 +13,7 @@ public class RawUAV extends UAV {
 
     private double last_profit;
     private Strategy last_move;
+    private static final double BIAS = 1; 
     
     public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -50,11 +51,10 @@ public class RawUAV extends UAV {
             for (int j = 0; j < grid_size; j++) {
                 double sir = 0.0d;
                 int termNum = grid[i][j].getTermNum();
-                
                 if (termNum == 0) continue;
                 
                 Terminal t = grid[i][j].getTerminal();
-                Point p = strategyToPoint(last_move);
+                Point p = strategyToPoint(last_move, BIAS);
                 sir = t.peekSIR(getID(), p.x, p.y, p.z);
                 
                 if (sir > 0) {
@@ -72,13 +72,15 @@ public class RawUAV extends UAV {
         } 
         else last_move = Strategy.randomStrategy();
         
-        moveByStrategy(last_move, grid_size);
+        moveByStrategy(last_move, grid_size, BIAS);
     }
     
-    public double getSpectrum(Grid[][] grid) {
+    @Override
+    public double[] getSpectrumAndTerms(Grid[][] grid) {
         int grid_size = grid.length;
         int si_deno = 0;
         double si_no = 0.0d;
+        double[] res = new double[2];
         
         for (int i = 0; i < grid_size; i++) {
             for (int j = 0; j < grid_size; j++) {
@@ -98,7 +100,10 @@ public class RawUAV extends UAV {
         System.out.println("Terms: " + si_deno);
         if (si_deno == 0) si_deno = 1;
         
-        return si_no;
+        res[0] = si_no;
+        res[1] = si_deno;
+        
+        return res;
     }
     
     public String toString() {
@@ -119,7 +124,7 @@ public class RawUAV extends UAV {
         Random r = new Random();
         
         for (Strategy stgy : Strategy.values()) {
-            Point pt = strategyToPoint(stgy);
+            Point pt = strategyToPoint(stgy, BIAS);
             
             pt.add(x(), y(), z());
             if (checkBoundary(pt, grid_size))  tmp.add(stgy);
