@@ -1,6 +1,7 @@
 package thesis;
 
 import java.util.Iterator;
+import java.util.Random;
 
 public abstract class UAV {
 
@@ -45,55 +46,28 @@ public abstract class UAV {
     
     public static double ld(double sir) {
         double result = Math.log10(sir + 1) / Math.log10(2);
- 
+        
         if (result < 0.1) return 0;
         else if (result > 4) return 4;
         else return result;
     }
     
-    protected void moveByStrategy(Strategy stgy, int grid_size, double bias) {
-        switch (stgy) {
-        case STILL:
-            break;
-        case UP:
-            move(0, 0, Environment.STEP * bias, Environment.MAX_HEIGHT);
-            break;
-        case DOWN:
-            move(0, 0, -Environment.STEP * bias, Environment.MAX_HEIGHT);
-            break; 
-        case FORWARD:
-            move(0, -Environment.STEP, 0, grid_size);
-            break;
-        case BACKWARD:
-            move(0, Environment.STEP, 0, grid_size);
-            break;
-        case RIGHT:
-            move(Environment.STEP, 0, 0, grid_size);
-            break;
-        case LEFT:
-            move(-Environment.STEP, 0, 0, grid_size);
-            break;
-        }
+    protected void moveByPoint(Point pt, int grid_size) {
+        move(pt.x, 0, 0, grid_size);
+        move(0, pt.y , 0, grid_size);
+        move(0, 0, pt.z, Environment.MAX_HEIGHT);
     }
-    
-    public static Point strategyToPoint(Strategy stgy, double bias) {
-        switch (stgy) {
-        case STILL:
-            return new Point(0, 0, 0);
-        case UP:
-            return new Point(0, 0, Environment.STEP * bias);
-        case DOWN:
-            return new Point(0, 0, -Environment.STEP * bias);
-        case FORWARD:
-            return new Point(0, -Environment.STEP, 0);
-        case BACKWARD:
-            return new Point(0, Environment.STEP, 0);
-        case RIGHT:
-            return new Point(Environment.STEP, 0, 0);
-        case LEFT:
-            return new Point(-Environment.STEP, 0, 0);
+
+    protected Point randomPoint(int grid, int height, double weight) {
+        Random r = new Random();
+        Point pt = new Point(0, 0, 0);
+        while (true) {
+            pt.x = (r.nextInt(3) - 1) * Environment.STEP;
+            pt.y = (r.nextInt(3) - 1) * Environment.STEP;
+            pt.z = (r.nextInt(3) - 1) * Environment.STEP * weight;
+            
+            if (checkBoundary(pt, grid, height)) return pt;           
         }
-        return new Point(0, 0, 0);
     }
 
     private void move(double x, double y, double z, int boundary) {
@@ -102,10 +76,10 @@ public abstract class UAV {
         if (checkBoundary(this.z + z, boundary)) this.z += z; 
     }
     
-    public boolean checkBoundary(Point pt, int boundary) {
-        if (pt.x < 0 || pt.x > boundary) return false;
-        if (pt.y < 0 || pt.y > boundary) return false;
-        if (pt.z < 0 || pt.z > boundary) return false;
+    public boolean checkBoundary(Point pt, int grid, int height) {
+        if ((this.x + pt.x) < 0 || (this.x + pt.x) > grid) return false;
+        if ((this.y + pt.y) < 0 || (this.y + pt.y) > grid) return false;
+        if ((this.z + pt.z) < 0 || (this.z + pt.z) > height) return false;
         else return true;
     }
     
@@ -121,4 +95,8 @@ public abstract class UAV {
     public abstract double[] getSpectrumAndTerms(Grid[][] grid);
     
     public abstract void run(Grid[][] grid);
+    
+    public static void main(String[] args) {
+        
+    }
 }

@@ -12,8 +12,8 @@ import java.util.Random;
 public class RawUAV extends UAV {
 
     private double last_profit;
-    private Strategy last_move;
-    private static final double BIAS = 1; 
+    private Point last_move;
+    private static final double Z_WEIGHT = 1; 
     
     public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -38,7 +38,7 @@ public class RawUAV extends UAV {
     public RawUAV(double x, double y, double z, boolean isOpen) {
         super(x, y, z, isOpen);
         last_profit = 0;
-        last_move = Strategy.randomStrategy();
+        last_move = randomPoint(30, Environment.MAX_HEIGHT, Z_WEIGHT);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class RawUAV extends UAV {
                 if (termNum == 0) continue;
                 
                 Terminal t = grid[i][j].getTerminal();
-                Point p = strategyToPoint(last_move, BIAS);
+                Point p = last_move;
                 sir = t.peekSIR(getID(), p.x, p.y, p.z);
                 
                 if (sir > 0) {
@@ -66,13 +66,13 @@ public class RawUAV extends UAV {
         
         if (si_deno != 0) {
             double si = si_no / si_deno;
-            if (last_profit >= si) last_move = randomStrategy(grid_size);
+            if (last_profit >= si) last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Z_WEIGHT);
             
             last_profit = si;
         } 
-        else last_move = Strategy.randomStrategy();
+        else last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Z_WEIGHT);
         
-        moveByStrategy(last_move, grid_size, BIAS);
+        moveByPoint(last_move, grid_size);
     }
     
     @Override
@@ -114,27 +114,7 @@ public class RawUAV extends UAV {
         return sb.toString();
     }
     
-    /**
-     * Only return available Strategies which don't cause moving out of bound.
-     * @param grid_size
-     * @return one strategy from Enum Strategy
-     */
-    private Strategy randomStrategy(int grid_size) {
-        ArrayList<Strategy> tmp = new ArrayList<>();
-        Random r = new Random();
-        
-        for (Strategy stgy : Strategy.values()) {
-            Point pt = strategyToPoint(stgy, BIAS);
-            
-            pt.add(x(), y(), z());
-            if (checkBoundary(pt, grid_size))  tmp.add(stgy);
-        }
-        
-        return tmp.get(r.nextInt(tmp.size()));
-    }
-    
     public static void main(String[] args) {
-        System.out.println(Double.MIN_VALUE);
     }
 }
 

@@ -63,7 +63,7 @@ public class Terminal {
 //            System.out.println("Largest index: " + indexOfLargestPower());
 //            System.out.println(net_power[uavID] / interference + " " + net_power[uavID] + " " + interference);
 //            System.out.println("\n*** END table ***\n");            
-//            
+            
             double tmp = net_power[uavID];
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
 
