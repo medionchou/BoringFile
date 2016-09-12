@@ -12,7 +12,6 @@ import java.util.Scanner;
 import edu.princeton.cs.algs4.Merge;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdStats;
-import javafx.scene.effect.Lighting;
 
 
 public class Environment {
@@ -71,6 +70,8 @@ public class Environment {
     public void simulate() {
         for (int i = 0; i < 10000; i++) {
             int[] seq = sg.sequence(UAV_NUM);
+            
+            System.out.println("Iteration: " + (i+1));
             
             for (int j = 0; j < seq.length; j++) {
                 uav[seq[j]].run(grid);
@@ -278,7 +279,8 @@ public class Environment {
 
     public static void main(String[] args) {
         
-        Environment e = new Environment("poisson_distribute.txt", "uavConfig.txt", UAVType.RawUAV);
+    	System.out.println("Simulation Begin !.");
+        Environment e = new Environment("poisson_distribution1.txt", "uavConfig.txt", UAVType.RawUAV);
         
         e.simulate(); 
     }

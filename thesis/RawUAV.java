@@ -38,7 +38,7 @@ public class RawUAV extends UAV {
     public RawUAV(double x, double y, double z, boolean isOpen) {
         super(x, y, z, isOpen);
         last_profit = 0;
-        last_move = randomPoint(30, Environment.MAX_HEIGHT, Z_WEIGHT);
+        last_move = randomPoint(Integer.MAX_VALUE, Environment.MAX_HEIGHT, Z_WEIGHT);
     }
 
     @Override
@@ -115,6 +115,15 @@ public class RawUAV extends UAV {
     }
     
     public static void main(String[] args) {
+    	
+    	
+    	RawUAV ru = new RawUAV(30, 30, 1, true);
+    	RawUAV ru1 = new RawUAV(30, 30, 1, true);
+    	
+    	while (true) {
+    		System.out.println("ru1: " + ru.randomPoint(60, 5, 1));
+    		System.out.println("ru2: " + ru1.randomPoint(60, 5, 1));
+    	}
     }
 }
 

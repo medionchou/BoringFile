@@ -3,6 +3,8 @@ package thesis;
 import java.util.Iterator;
 import java.util.Random;
 
+import edu.princeton.cs.algs4.StdRandom;
+
 public abstract class UAV {
 
     private static int ID = 0; //for automatically increment id
@@ -58,15 +60,15 @@ public abstract class UAV {
         move(0, 0, pt.z, Environment.MAX_HEIGHT);
     }
 
-    protected Point randomPoint(int grid, int height, double weight) {
-        Random r = new Random();
+    protected Point randomPoint(int grid_size, int maxHeight, double weight) {
         Point pt = new Point(0, 0, 0);
+        
         while (true) {
-            pt.x = (r.nextInt(3) - 1) * Environment.STEP;
-            pt.y = (r.nextInt(3) - 1) * Environment.STEP;
-            pt.z = (r.nextInt(3) - 1) * Environment.STEP * weight;
+            pt.x = (StdRandom.uniform(3) - 1) * Environment.STEP;
+            pt.y = (StdRandom.uniform(3) - 1) * Environment.STEP;
+            pt.z = (StdRandom.uniform(3) - 1) * Environment.STEP * weight;
             
-            if (checkBoundary(pt, grid, height)) return pt;           
+            if (checkBoundary(pt, grid_size, maxHeight)) return pt;           
         }
     }
 
