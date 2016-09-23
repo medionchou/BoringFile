@@ -16,8 +16,6 @@ public abstract class UAV {
     private boolean isOpen;
     
     
-
-    
     public UAV(double x, double y, double z, boolean isOpen) {
         this.x = x;
         this.y = y;
@@ -47,11 +45,9 @@ public abstract class UAV {
     }
     
     public static double ld(double sir) {
-        double result = Math.log10(sir + 1) / Math.log10(2);
-        
-        if (result < 0.1) return 0;
-        else if (result > 4) return 4;
-        else return result;
+        if (sir < 0.1) return 0;
+        else if (sir >= 15) return 4;
+        else return Math.log10(sir + 1) / Math.log10(2);
     }
     
     protected void moveByPoint(Point pt, int grid_size) {
@@ -60,13 +56,13 @@ public abstract class UAV {
         move(0, 0, pt.z, Environment.MAX_HEIGHT);
     }
 
-    protected Point randomPoint(int grid_size, int maxHeight, double weight) {
+    protected Point randomPoint(int grid_size, int maxHeight, double zweight) {
         Point pt = new Point(0, 0, 0);
         
         while (true) {
             pt.x = (StdRandom.uniform(3) - 1) * Environment.STEP;
             pt.y = (StdRandom.uniform(3) - 1) * Environment.STEP;
-            pt.z = (StdRandom.uniform(3) - 1) * Environment.STEP * weight;
+            pt.z = (StdRandom.uniform(3) - 1) * Environment.STEP * zweight;
             
             if (checkBoundary(pt, grid_size, maxHeight)) return pt;           
         }
@@ -78,10 +74,10 @@ public abstract class UAV {
         if (checkBoundary(this.z + z, boundary)) this.z += z; 
     }
     
-    public boolean checkBoundary(Point pt, int grid, int height) {
-        if ((this.x + pt.x) < 0 || (this.x + pt.x) > grid) return false;
-        if ((this.y + pt.y) < 0 || (this.y + pt.y) > grid) return false;
-        if ((this.z + pt.z) < 0 || (this.z + pt.z) > height) return false;
+    public boolean checkBoundary(Point pt, int grid_size, int maxHeight) {
+        if ((this.x + pt.x) < 0 || (this.x + pt.x) > grid_size) return false;
+        if ((this.y + pt.y) < 0 || (this.y + pt.y) > grid_size) return false;
+        if ((this.z + pt.z) < 0 || (this.z + pt.z) > maxHeight) return false;
         else return true;
     }
     
@@ -99,6 +95,7 @@ public abstract class UAV {
     public abstract void run(Grid[][] grid);
     
     public static void main(String[] args) {
+
         
     }
 }

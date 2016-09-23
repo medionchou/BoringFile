@@ -1,6 +1,7 @@
 package thesis;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.stream.IntStream;
 
 import edu.princeton.cs.algs4.Merge;
 import edu.princeton.cs.algs4.StdRandom;
@@ -20,7 +22,7 @@ public class Environment {
     public static final int TERMINAL_NUM = 350;
     public static final int GRID_SIZE = 60;
     public static final int MAX_WEIGHT = 5;
-    public static final int MAX_HEIGHT = 3;
+    public static final int MAX_HEIGHT = 5;
     public static final double TRANSMIT_POWER = 46;
     public static final double STEP = 0.1;
     public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
@@ -33,8 +35,8 @@ public class Environment {
     private int[] x;
     private int[] y;
     private int[] weight;
-    private int grid_size;
     private int terminal_num;
+    private int grid_size;
     private SequenceGenerator sg;
     
 
@@ -71,7 +73,8 @@ public class Environment {
         for (int i = 0; i < 10000; i++) {
             int[] seq = sg.sequence(UAV_NUM);
             
-            System.out.println("Iteration: " + (i+1));
+            
+            if ((i+1) % 100 == 0) System.out.println("Iteration: " + (i+1));
             
             for (int j = 0; j < seq.length; j++) {
                 uav[seq[j]].run(grid);
@@ -80,13 +83,13 @@ public class Environment {
         
         double avs = 0d;
         double res[];
-        double[] term_dist = new double[uav.length];
+        int[] term_dist = new int[uav.length];
         for (int i = 0; i < uav.length; i++) {
             System.out.println(uav[i]);
             res = uav[i].getSpectrumAndTerms(grid);
             System.out.println("Spectrum: " + res[0] + "\n");
             avs += res[0];
-            term_dist[i] = res[1];
+            term_dist[i] = (int) res[1];
         }
         System.out.println("Standard deviation: " + StdStats.stddev(term_dist));
         System.out.println("Total Average Spectral Efficiency: " + avs / terminal_num);
@@ -279,10 +282,29 @@ public class Environment {
 
     public static void main(String[] args) {
         
-    	System.out.println("Simulation Begin !.");
-        Environment e = new Environment("poisson_distribution1.txt", "uavConfig.txt", UAVType.RawUAV);
+        Environment e = new Environment("poisson_distribution2.txt", "uavConfig_height300m.txt", UAVType.RawUAV);
         
         e.simulate(); 
+        
+    	
+//    	File f = new File("test.txt");
+//    	
+//    	try {
+//			PrintWriter pw = new PrintWriter(f);
+//			pw.write("360 60\n");
+//			
+//			for (int i = 0; i < 60; i++) {
+//				for (int j = 0; j < 60; j++) {
+//					if (j % 10 == 5) pw.write(i + " " + j + " " + 1 + "\n");
+//				}
+//			}
+//
+//			
+//			pw.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
     }
        
 }
