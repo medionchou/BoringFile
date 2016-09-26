@@ -25,6 +25,7 @@ public class Environment {
     public static final int MAX_HEIGHT = 5;
     public static final double TRANSMIT_POWER = 46;
     public static final double STEP = 0.1;
+	public static final double Z_WEIGHT = 0;
     public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
     public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
     public static final String UAV_RANDOM = "UAV_RANDOM";
@@ -91,9 +92,15 @@ public class Environment {
             avs += res[0];
             term_dist[i] = (int) res[1];
         }
-        System.out.println("Standard deviation: " + StdStats.stddev(term_dist));
+        double std = StdStats.stddev(term_dist);
+        System.out.println("Standard deviation: " + std);
         System.out.println("Total Average Spectral Efficiency: " + avs / terminal_num);
         System.out.println("Terminal num: " + terminal_num);
+        
+        if ((std) < 6) {
+        	exportFile(avs/terminal_num + ".txt");
+        	System.exit(0);
+        }
     }
     
     
@@ -102,13 +109,19 @@ public class Environment {
         if (uavDistri == null || uavType == null) throw new NullPointerException("Arguments can't be null");
         Point[] pt = getPoints(uavDistri);
         uav = new UAV[pt.length];
+        
         switch (uavType) {
-        case RawUAV:
+        case ReferenceUAV:
             for (int i = 0; i < uav.length; i++) {
-                uav[i] = new RawUAV(pt[i].x, pt[i].y, pt[i].z, true);
+                uav[i] = new ReferenceUAV(pt[i].x, pt[i].y, pt[i].z, true);
             }
-            sg = RawUAV.SEQUENCE_GENERATOR;
+            sg = ReferenceUAV.SEQUENCE_GENERATOR;
             break;
+        case OriginalUAV:
+        	for (int i = 0; i < uav.length; i++) {
+                uav[i] = new OriginalUAV(pt[i].x, pt[i].y, pt[i].z, true);
+            }
+            sg = ReferenceUAV.SEQUENCE_GENERATOR;
         case GameModelUAV:
             break;
         }
@@ -282,31 +295,43 @@ public class Environment {
 
     public static void main(String[] args) {
         
-        Environment e = new Environment("poisson_distribution2.txt", "uavConfig_height300m.txt", UAVType.RawUAV);
-        
-        e.simulate(); 
-        
     	
-//    	File f = new File("test.txt");
-//    	
-//    	try {
-//			PrintWriter pw = new PrintWriter(f);
-//			pw.write("360 60\n");
-//			
-//			for (int i = 0; i < 60; i++) {
-//				for (int j = 0; j < 60; j++) {
-//					if (j % 10 == 5) pw.write(i + " " + j + " " + 1 + "\n");
-//				}
-//			}
-//
-//			
-//			pw.close();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+    	while (true) {
+    		UAV.ID = 0;
+    		Environment e = new Environment(POISSON_DISTRIBUTION, "uavConfig_height300m.txt", UAVType.OriginalUAV);
+        
+    		e.simulate(); 
+    	}
+        
     }
        
 }
+
+
+
+
+
+
+
+
+
+//File f = new File("test.txt");
+//
+//try {
+//	PrintWriter pw = new PrintWriter(f);
+//	pw.write("360 60\n");
+//	
+//	for (int i = 0; i < 60; i++) {
+//		for (int j = 0; j < 60; j++) {
+//			if (j % 10 == 5) pw.write(i + " " + j + " " + 1 + "\n");
+//		}
+//	}
+//
+//	
+//	pw.close();
+//} catch (IOException e) {
+//	// TODO Auto-generated catch block
+//	e.printStackTrace();
+//}
 
 

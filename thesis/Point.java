@@ -18,6 +18,7 @@ public class Point {
         this.z += z;
     }
     
+    
     public String toString() {
         return "x:" + x + " y:" + y + " z:" + z  ;
     }

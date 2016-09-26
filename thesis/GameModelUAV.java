@@ -1,18 +1,10 @@
 package thesis;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Random;
 
-/**
- * 
- * @author Medion-PC M2016 prototype UAV.
- */
-public class RawUAV extends UAV {
+public class GameModelUAV extends UAV {
 
 	private double last_profit;
-	private Point last_move;
-	private static final double Z_WEIGHT = 0;
 
 	public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -35,10 +27,9 @@ public class RawUAV extends UAV {
 
 	};
 
-	public RawUAV(double x, double y, double z, boolean isOpen) {
+	public GameModelUAV(double x, double y, double z, boolean isOpen) {
 		super(x, y, z, isOpen);
 		last_profit = 0;
-		last_move = new Point(0.0, 0.0, 0.0);
 	}
 
 	@Override
@@ -69,11 +60,11 @@ public class RawUAV extends UAV {
 		if (si_deno > 0) {
 			double si = si_no / si_deno;
 			if (last_profit > si)
-				last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Z_WEIGHT);
+				last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Environment.Z_WEIGHT);
 
 			last_profit = si;
 		} else {
-			last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Z_WEIGHT);
+			last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Environment.Z_WEIGHT);
 		}
 
 		moveByPoint(last_move, grid_size);
@@ -122,7 +113,4 @@ public class RawUAV extends UAV {
 		return sb.toString();
 	}
 
-	public static void main(String[] args) {
-
-	}
 }
