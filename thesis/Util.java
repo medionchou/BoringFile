@@ -5,11 +5,11 @@ import java.util.Random;
 
 public class Util {
 	
+	private static HashMap<Strategy, Point> map;
 	private Util() {}
 	
-	
-	public static HashMap<Strategy, Point> enumerate() {
-		HashMap<Strategy, Point> map = new HashMap<>();
+	static {
+		map = new HashMap<>();
 		
 		for (Strategy st:Strategy.values()) {
 			switch (st) {
@@ -36,13 +36,35 @@ public class Util {
 				break;
 			}
 		}
-		
+	}
+	
+	
+	public static HashMap<Strategy, Point> enumerate() {
 		return map;		
 	}
 	
 	public static Point randomPoint() {
 		Strategy st = Strategy.randomStrategy();
 		
+		switch(st) {
+		case UP:
+			return new Point(0, 0, Environment.STEP * Environment.Z_WEIGHT);
+		case DOWN:
+			return new Point(0, 0, -Environment.STEP * Environment.Z_WEIGHT);
+		case FORWARD:
+			return new Point(Environment.STEP, 0, 0);
+		case BACKWARD:
+			return new Point(-Environment.STEP, 0, 0);
+		case RIGHT:
+			return new Point(0, Environment.STEP, 0);
+		case LEFT:
+			return new Point(0, -Environment.STEP, 0);
+		default:
+			return new Point(0, 0, 0);
+		}
+	}
+	
+	public static Point getPointByStrategy(Strategy st) {
 		switch(st) {
 		case UP:
 			return new Point(0, 0, Environment.STEP * Environment.Z_WEIGHT);

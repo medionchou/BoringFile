@@ -1,5 +1,6 @@
 package thesis;
 
+import java.util.HashMap;
 import java.util.Random;
 
 public class GameModelUAV extends UAV {
@@ -17,7 +18,10 @@ public class GameModelUAV extends UAV {
 				a[i] = i;
 			Random random = new Random();
 			for (int i = 0; i < n; i++) {
-				int r = i + random.nextInt(n - i); // between i and n-1
+				int r = i + random.nextInt(n - i); // between
+													// i
+													// and
+													// n-1
 				int temp = a[i];
 				a[i] = a[r];
 				a[r] = temp;
@@ -35,20 +39,48 @@ public class GameModelUAV extends UAV {
 	@Override
 	public void run(Grid[][] grid) {
 		int grid_size = grid.length;
+		HashMap<Strategy, Point> map = Util.enumerate();
+		Point pt = new Point(0, 0, 0);
+		Strategy bestStrategy = Strategy.BACKWARD;
+		double bestPayoff = Double.MIN_VALUE;
+		
+		for (Strategy st : Strategy.values()) {
+			pt.set(map.get(st));
+				
+			if (checkBoundary(pt, grid_size, Environment.MAX_HEIGHT)) {
+				BestPayoffPair bpp = payoff(st, pt, grid, grid_size);
+				
+				
+				if (Double.compare(bestPayoff, bpp.bestPayoff) < 0) {
+					bestPayoff = bpp.bestPayoff;
+					bestStrategy = bpp.bestStrategy;
+				}
+			}
+		}
+		
+		
+		if (Double.compare(bestPayoff, Double.MIN_VALUE) != 0) pt = Util.getPointByStrategy(bestStrategy);
+		else pt = Util.randomPoint();
+		
+		
+		if (pt.z != 0) moveByPoint(pt, Environment.MAX_HEIGHT);
+		else moveByPoint(pt, grid_size);
+	}
+	
+	private BestPayoffPair payoff(Strategy st, Point pt, Grid[][] grid, int grid_size) {
 		int si_deno = 0;
 		double si_no = 0.0d;
-
+		
 		for (int i = 0; i < grid_size; i++) {
 			for (int j = 0; j < grid_size; j++) {
-				double sir = 0.0d;
 				int termNum = grid[i][j].getTermNum();
 				if (termNum == 0)
 					continue;
+				double sir = 0.0d;
 
 				Terminal t = grid[i][j].getTerminal();
-				Point p = last_move;
-				sir = t.peekSIR(getID(), p.x, p.y, p.z);
-
+				sir = t.peekSIR(getID(), pt.x, pt.y, pt.z);
+				
 				double tmp = UAV.ld(sir);
 				if (tmp > 0) {
 					si_no += tmp * termNum;
@@ -56,18 +88,30 @@ public class GameModelUAV extends UAV {
 				} 
 			}
 		}
+		
 
-		if (si_deno > 0) {
-			double si = si_no / si_deno;
-			if (last_profit > si)
-				last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Environment.Z_WEIGHT);
+		if (si_deno > 0) return new BestPayoffPair(st, (si_no / si_deno) - cost(st));
+		else return new BestPayoffPair(st, 0 - cost(st));
+	}
 
-			last_profit = si;
-		} else {
-			last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Environment.Z_WEIGHT);
+	private double cost(Strategy st) {
+		switch (st) {
+		case UP:
+			return 0.0d;
+		case DOWN:
+			return 0.0d;
+		case FORWARD:
+			return 0.0d;
+		case BACKWARD:
+			return 0.0d;
+		case RIGHT:
+			return 0.0d;
+		case LEFT:
+			return 0.0d;
+		default:
+			return 0.0d;
 		}
 
-		moveByPoint(last_move, grid_size);
 	}
 
 	@Override
@@ -111,6 +155,20 @@ public class GameModelUAV extends UAV {
 				+ String.format("%.2f", z()));
 
 		return sb.toString();
+	}
+	
+	private static class BestPayoffPair {
+		Strategy bestStrategy;
+		Double bestPayoff;
+		BestPayoffPair(Strategy st, Double payoff) {
+			bestStrategy = st;
+			bestPayoff = payoff;
+		}
+	}
+	
+	public static void main(String[] args) {
+		
+		System.out.println(Double.compare(Double.MIN_VALUE, Double.MIN_VALUE));
 	}
 
 }

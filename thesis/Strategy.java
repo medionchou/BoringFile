@@ -19,6 +19,8 @@ public enum Strategy {
         return STRATEGY[r.nextInt(STRATEGY.length)];
     }
     
+    
+    
 }
 
 

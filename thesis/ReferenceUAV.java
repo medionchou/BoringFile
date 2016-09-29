@@ -70,27 +70,24 @@ public class ReferenceUAV extends UAV {
 		if (si_deno > 0) {
 			double si = si_no / si_deno;
 			if (last_profit > si)
-				last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Environment.Z_WEIGHT);
+				last_move = randomPoint(grid_size);
 
 			last_profit = si;
 		} else {
-			last_move = randomPoint(grid_size, Environment.MAX_HEIGHT, Environment.Z_WEIGHT);
+			last_move = randomPoint(grid_size);
 		}
 
-		moveByPoint(last_move, grid_size);
+		if (last_move.z != 0) moveByPoint(last_move, Environment.MAX_HEIGHT);
+		else moveByPoint(last_move, grid_size);
 	}
 	
-    private Point randomPoint(int grid_size, int maxHeight, double zweight) {
-        Point pt = new Point(0, 0, 0);
-        
-        while (true) {
-            pt.x = (StdRandom.uniform(3) - 1) * Environment.STEP;
-            pt.y = (StdRandom.uniform(3) - 1) * Environment.STEP;
-            pt.z = (StdRandom.uniform(3) - 1) * Environment.STEP * zweight;
-            
-            if (checkBoundary(pt, grid_size, maxHeight)) return pt;           
-        }
-    }
+	private Point randomPoint(int grid_size) {
+		Point pt = new Point(0, 0, 0);
+		while (true) {
+			pt.set(Util.randomPoint());
+			if (checkBoundary(pt, grid_size, Environment.MAX_HEIGHT)) return pt;
+		}
+	}
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {

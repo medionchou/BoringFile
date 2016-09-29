@@ -18,6 +18,18 @@ public class Point {
         this.z += z;
     }
     
+    public void set(double x, double y, double z) {
+    	this.x = x;
+    	this.y = y;
+    	this.z = z;
+    }
+    
+    public void set(Point pt) {
+    	this.x = pt.x;
+    	this.y = pt.y;
+    	this.z = pt.z;
+    }
+     
     
     public String toString() {
         return "x:" + x + " y:" + y + " z:" + z  ;
