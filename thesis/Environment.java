@@ -25,7 +25,7 @@ public class Environment {
 	public static final int MAX_HEIGHT = 5;
 	public static final double TRANSMIT_POWER = 46;
 	public static final double STEP = 0.1;
-	public static final double Z_WEIGHT = 1;
+	public static final double Z_WEIGHT = 0; //whether UAV should consider moving z-coordination.
 	public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
 	public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
 	public static final String UAV_RANDOM = "UAV_RANDOM";
@@ -102,7 +102,7 @@ public class Environment {
 	private void initUAV(String uavDistri, UAVType uavType) {
 		if (uavDistri == null || uavType == null)
 			throw new NullPointerException("Arguments can't be null");
-		Point[] pt = getPoints(uavDistri);
+		Point[] pt = getUAVLocs(uavDistri);
 		uav = new UAV[pt.length];
 		
 		System.out.println("Selected UAV type: " + uavType);
@@ -115,16 +115,17 @@ public class Environment {
 			sg = ReferenceUAV.SEQUENCE_GENERATOR;
 			break;
 		case OriginalUAV:
+		    Terminal.DB_THRESHOLD = false;
 			for (int i = 0; i < uav.length; i++) {
 				uav[i] = new OriginalUAV(pt[i].x, pt[i].y, pt[i].z, true);
 			}
-			sg = ReferenceUAV.SEQUENCE_GENERATOR;
-			break;
+			sg = OriginalUAV.SEQUENCE_GENERATOR;
+			break; 
 		case GameModelUAV:
 			for (int i = 0; i < uav.length; i++) {
 				uav[i] = new GameModelUAV(pt[i].x, pt[i].y, pt[i].z, true);
 			}
-			sg = ReferenceUAV.SEQUENCE_GENERATOR;
+			sg = GameModelUAV.SEQUENCE_GENERATOR;
 			break;
 		}
 		System.out.println("Finished");
@@ -169,7 +170,7 @@ public class Environment {
 		return sb.toString();
 	}
 
-	private Point[] getPoints(String uavDistri) {
+	private Point[] getUAVLocs(String uavDistri) {
 		Point[] pt = null;
 		switch (uavDistri) {
 		case UAV_RANDOM:
@@ -299,7 +300,7 @@ public class Environment {
 
 	public static void main(String[] args) {
 
-		Environment e = new Environment("poisson_distribution3.txt", "uavConfig_height300m.txt", UAVType.GameModelUAV);
+		Environment e = new Environment("cluster5_n360.txt", "uavConfig_height300m.txt", UAVType.OriginalUAV);
 		
 		
 		System.out.println("Start simulation ");

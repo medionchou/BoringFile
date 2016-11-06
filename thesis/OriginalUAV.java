@@ -4,6 +4,13 @@ import java.util.Random;
 
 import edu.princeton.cs.algs4.StdRandom;
 
+
+/**
+ * 
+ * @author Medion-PC [M16] prototype UAV.
+ * 
+ * The UAV that moves by randomly choosing one unit distance from each dimensions(x, y, z)
+ */
 public class OriginalUAV extends UAV {
 	private double last_profit;
 	private Point last_move;

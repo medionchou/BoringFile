@@ -6,11 +6,14 @@ import edu.princeton.cs.algs4.StdStats;
 
 public class Terminal {
     
-    public final static double DEFAULT_VAL = 0.0d;
+    public static boolean DB_THRESHOLD = false;
+    private final static int DB_BOUNDARY = -100;
+    private final static int NOT_INITIALIZED = -1;
 
     private double x;
     private double y;
     private int weight;
+    private int avail_uav;
     private UAV[] uav;
     private double[] net_power; //cache uav net power value for speeding up calculation.
     
@@ -18,16 +21,25 @@ public class Terminal {
         this.x = x;
         this.y = y;
         this.weight = weight;
+        avail_uav = 0;
     }
     
     public void setUAV(UAV[] uav) {
         this.uav = uav;
         net_power = new double[uav.length];
-        Arrays.fill(net_power, -1);
+        Arrays.fill(net_power, NOT_INITIALIZED);
     }
     
     public int getWeight() {
         return weight;
+    }
+    
+    public int getCoveringUAV() {
+        return avail_uav;
+    }
+    
+    public void setCoveringUAV(int num) {
+        avail_uav += num;
     }
     
     /**
@@ -45,7 +57,7 @@ public class Terminal {
         if (indexOfLargestPower() == uavID) {
             double tmp = net_power[uavID];
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
-
+            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
             return tmp / interference ;
         }
         else {
@@ -117,16 +129,17 @@ public class Terminal {
         
         double distance2D = Math.hypot(x - uavX, y - uavY);
         double distance = Math.hypot(distance2D, uavZ);
-        
         /**
          * pathloss = Pt / Pr = log_10(Pt) - log_10(Pr)
          * therefore, log_10(Pr)(dBm) = log_10(Pt)(dBm) - pathloss
          */
-        return dBmToMiliWatt(Environment.TRANSMIT_POWER - pathLoss(degree, distance));
+        double power = Environment.TRANSMIT_POWER - pathLoss(degree, distance);
+        
+        if (DB_THRESHOLD && power < DB_BOUNDARY) return 0; 
+        return dBmToMiliWatt(power);
     }
     
     private double dBmToMiliWatt(double dBm) {
-
         return Math.pow(10, dBm / 10);
     }
     

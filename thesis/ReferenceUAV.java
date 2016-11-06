@@ -8,7 +8,9 @@ import edu.princeton.cs.algs4.StdRandom;
 
 /**
  * 
- * @author Medion-PC M2016 prototype UAV.
+ * @author Medion-PC.
+ * 
+ * The UAV that randomly moves one unit choosing from 3 dimensions.  
  */
 public class ReferenceUAV extends UAV {
 
