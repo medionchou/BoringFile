@@ -29,9 +29,32 @@ public class Point {
     	this.y = pt.y;
     	this.z = pt.z;
     }
-     
+    
+    public boolean isClose(double x, double y, double z) {
+        double rx = Math.pow(this.x - x, 2);
+        double ry = Math.pow(this.y - y, 2);
+        double rz = Math.pow(this.z - z, 2);
+        
+        if ((rx+ry+rz) <= 1) return true;
+        else return false;
+    }   
+    
+    public double distance(double x, double y, double z) {
+        double rx = Math.pow(this.x - x, 2);
+        double ry = Math.pow(this.y - y, 2);
+        double rz = Math.pow(this.z - z, 2);
+        
+        return Math.sqrt(rx + ry + rz);
+    }
     
     public String toString() {
         return "x:" + x + " y:" + y + " z:" + z  ;
     }
+    
+    public static void main(String[] args) {
+        Point p = new Point(1, 1, 1);
+        
+        System.out.println(p.distance(0, 0, 0));
+    }
+    
 }

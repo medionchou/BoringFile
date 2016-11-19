@@ -18,14 +18,14 @@ import edu.princeton.cs.algs4.StdStats;
 
 public class Environment {
 
-	public static final int UAV_NUM = 20;
-	public static final int TERMINAL_NUM = 350;
-	public static final int GRID_SIZE = 60;
+	public static int UAV_NUM = 20;
+	public static int TERMINAL_NUM = 350;
+	public static int GRID_SIZE = 60;
 	public static final int MAX_WEIGHT = 5;
 	public static final int MAX_HEIGHT = 5;
 	public static final double TRANSMIT_POWER = 46;
 	public static final double STEP = 0.1;
-	public static final double Z_WEIGHT = 0; //whether UAV should consider moving z-coordination.
+	public static final double Z_WEIGHT = 1; //whether UAV should consider moving z-coordination.
 	public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
 	public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
 	public static final String UAV_RANDOM = "UAV_RANDOM";
@@ -45,6 +45,10 @@ public class Environment {
 		initTerms(type);
 		initUAV(uavDistri, uavType);
 		bindUAVtoTerm();
+	}
+	
+	public void setPowerThreshold(boolean val) {
+//	    Terminal.DB_THRESHOLD = val;	    
 	}
 
 	public void exportFile(String filename) {
@@ -71,15 +75,18 @@ public class Environment {
 	}
 
 	public void simulate() {
+//	    Scanner s = new Scanner(System.in);
+
 		for (int i = 0; i < 10000; i++) {
 			int[] seq = sg.sequence(UAV_NUM);
-
-			if ((i + 1) % 100 == 0)
+			
+			if ((i + 1) % 1000 == 0)
 				System.out.println("Iteration: " + (i + 1));
 
 			for (int j = 0; j < seq.length; j++) {
 				uav[seq[j]].run(grid);
 			}
+//			s.nextLine();
 		}
 
 		double avs = 0d;
@@ -96,7 +103,7 @@ public class Environment {
 		System.out.println("Standard deviation: " + std);
 		System.out.println("Total Average Spectral Efficiency: " + avs / terminal_num);
 		System.out.println("Terminal num: " + terminal_num);
-
+		
 	}
 
 	private void initUAV(String uavDistri, UAVType uavType) {
@@ -115,18 +122,24 @@ public class Environment {
 			sg = ReferenceUAV.SEQUENCE_GENERATOR;
 			break;
 		case OriginalUAV:
-		    Terminal.DB_THRESHOLD = false;
 			for (int i = 0; i < uav.length; i++) {
 				uav[i] = new OriginalUAV(pt[i].x, pt[i].y, pt[i].z, true);
 			}
 			sg = OriginalUAV.SEQUENCE_GENERATOR;
 			break; 
-		case GameModelUAV:
+		case OptimalGameModelUAV:
 			for (int i = 0; i < uav.length; i++) {
-				uav[i] = new GameModelUAV(pt[i].x, pt[i].y, pt[i].z, true);
+				uav[i] = new OptimalGameModelUAV(pt[i].x, pt[i].y, pt[i].z, true);
 			}
-			sg = GameModelUAV.SEQUENCE_GENERATOR;
+			sg = OptimalGameModelUAV.SEQUENCE_GENERATOR;
 			break;
+		case GameUAV:
+		    for (int i = 0; i < uav.length; i++) {
+                uav[i] = new GameUAV(pt[i].x, pt[i].y, pt[i].z, true);
+                uav[i].setPartnetUAV(uav);
+            }
+            sg = GameUAV.SEQUENCE_GENERATOR;
+            break; 
 		}
 		System.out.println("Finished");
 	}
@@ -144,6 +157,23 @@ public class Environment {
 			read_file(type);
 			break;
 		}
+	}
+	
+	public void outFinalLoc(String filename) throws FileNotFoundException {
+	    File f = new File(filename);
+	    PrintWriter pw = new PrintWriter(f);
+	    
+	    pw.println(terminal_num + " " + grid_size);
+	    for (int i = 0; i < terminal_num; i++) {
+	        pw.println(x[i] + " " + y[i] + " " + weight[i]);
+	    }
+	    pw.println("\" Below is uav data");
+	    
+	    for (int i = 0; i < uav.length; i++) {
+	        pw.println(Util.round(uav[i].x(), 2) + " " + Util.round(uav[i].y(), 2));
+	    }
+	    
+	    pw.close();
 	}
 
 	public String toString() {
@@ -185,7 +215,8 @@ public class Environment {
 			try {
 				Scanner sc = new Scanner(new File(uavDistri));
 				pt = new Point[sc.nextInt()];
-
+				UAV_NUM = pt.length;
+				System.out.println("UAV num: " + UAV_NUM);
 				for (int i = 0; i < pt.length; i++) {
 					pt[i] = new Point(sc.nextDouble(), sc.nextDouble(), sc.nextDouble());
 				}
@@ -298,15 +329,17 @@ public class Environment {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception{
 
-		Environment e = new Environment("cluster5_n360.txt", "uavConfig_height300m.txt", UAVType.OriginalUAV);
+		Environment e = new Environment("poisson_distribution3.txt", "uavConfig_height300m.txt", UAVType.ReferenceUAV);
+		e.setPowerThreshold(false);
 		
-		
+//		System.out.println(Terminal.DB_THRESHOLD);
 		System.out.println("Start simulation ");
-
+		
 		e.simulate();
-
+		
+		e.outFinalLoc("./result/final_loc_ref.txt");
 	}
 
 }

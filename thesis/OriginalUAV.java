@@ -93,6 +93,15 @@ public class OriginalUAV extends UAV {
             if (checkBoundary(pt, grid_size, maxHeight)) return pt;           
         }
     }
+    
+    /**
+     * Shall not call this method.
+     */
+    @Override
+    public void setPartnetUAV(UAV[] uav) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Operation is not supported for OriginalUAV");
+    }
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {

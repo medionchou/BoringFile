@@ -90,6 +90,15 @@ public class ReferenceUAV extends UAV {
 			if (checkBoundary(pt, grid_size, Environment.MAX_HEIGHT)) return pt;
 		}
 	}
+	
+    /**
+     * Shall not call this method.
+     */
+    @Override
+    public void setPartnetUAV(UAV[] uav) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Operation is not supported for ReferenceUAV");
+    }
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {

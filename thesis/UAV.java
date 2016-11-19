@@ -80,6 +80,8 @@ public abstract class UAV {
     
     public abstract void run(Grid[][] grid);
     
+    public abstract void setPartnetUAV(UAV[] uav);
+    
     public static void main(String[] args) {
 
         

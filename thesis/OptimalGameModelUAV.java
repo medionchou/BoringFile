@@ -3,7 +3,7 @@ package thesis;
 import java.util.HashMap;
 import java.util.Random;
 
-public class GameModelUAV extends UAV {
+public class OptimalGameModelUAV extends UAV {
 
 	private double last_profit;
 
@@ -18,10 +18,7 @@ public class GameModelUAV extends UAV {
 				a[i] = i;
 			Random random = new Random();
 			for (int i = 0; i < n; i++) {
-				int r = i + random.nextInt(n - i); // between
-													// i
-													// and
-													// n-1
+				int r = i + random.nextInt(n - i); // between i and n-1
 				int temp = a[i];
 				a[i] = a[r];
 				a[r] = temp;
@@ -31,7 +28,7 @@ public class GameModelUAV extends UAV {
 
 	};
 
-	public GameModelUAV(double x, double y, double z, boolean isOpen) {
+	public OptimalGameModelUAV(double x, double y, double z, boolean isOpen) {
 		super(x, y, z, isOpen);
 		last_profit = 0;
 	}
@@ -39,13 +36,12 @@ public class GameModelUAV extends UAV {
 	@Override
 	public void run(Grid[][] grid) {
 		int grid_size = grid.length;
-		HashMap<Strategy, Point> map = Util.enumerate();
 		Point pt = new Point(0, 0, 0);
 		Strategy bestStrategy = Strategy.BACKWARD;
 		double bestPayoff = Double.MIN_VALUE;
 		
 		for (Strategy st : Strategy.values()) {
-			pt.set(map.get(st));
+			pt.set(Util.getPointByStrategy(st));
 				
 			if (checkBoundary(pt, grid_size, Environment.MAX_HEIGHT)) {
 				BestPayoffPair bpp = payoff(st, pt, grid, grid_size);
@@ -96,10 +92,10 @@ public class GameModelUAV extends UAV {
 
 	private double cost(Strategy st) {
 		switch (st) {
-		case UP:
-			return 0.0d;
-		case DOWN:
-			return 0.0d;
+//		case UP:
+//			return 0.0d;
+//		case DOWN:
+//			return 0.0d;
 		case FORWARD:
 			return 0.0d;
 		case BACKWARD:
@@ -113,6 +109,12 @@ public class GameModelUAV extends UAV {
 		}
 
 	}
+	
+	@Override
+    public void setPartnetUAV(UAV[] uav) {
+	    // TODO Auto-generated method stub
+	    throw new UnsupportedOperationException("Operation is not supported for Ga");
+    }
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {

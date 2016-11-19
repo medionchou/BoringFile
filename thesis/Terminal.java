@@ -6,8 +6,8 @@ import edu.princeton.cs.algs4.StdStats;
 
 public class Terminal {
     
-    public static boolean DB_THRESHOLD = false;
-    private final static int DB_BOUNDARY = -100;
+//    public static boolean DB_THRESHOLD = false;
+//    private final static double DB_BOUNDARY = -100.0;
     private final static int NOT_INITIALIZED = -1;
 
     private double x;
@@ -21,7 +21,7 @@ public class Terminal {
         this.x = x;
         this.y = y;
         this.weight = weight;
-        avail_uav = 0;
+        avail_uav = 1; // avoid divide by zero
     }
     
     public void setUAV(UAV[] uav) {
@@ -57,8 +57,10 @@ public class Terminal {
         if (indexOfLargestPower() == uavID) {
             double tmp = net_power[uavID];
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
-            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
-            return tmp / interference ;
+            
+//            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
+            return net_power[uavID] / interference;
+//            return net_power[uavID] / (interference == 0 ? net_power[uavID] : interference);
         }
         else {
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
@@ -71,11 +73,44 @@ public class Terminal {
         net_power[uavID] = getNetPower(uav[uavID], 0, 0, 0); // what the fuck
         
         if (indexOfLargestPower() == uavID) {
-            return net_power[uavID] / interference ;
+            double tmp = net_power[uavID];
+//            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
+            return net_power[uavID] / interference;
+//            return net_power[uavID] / (interference == 0 ? net_power[uavID] : interference);
         }
         else {
             return 0.0d;
         }
+    }
+    
+    public double distance(UAV uav, Point pt) {
+        double rx = Math.pow(this.x - (uav.x() + pt.x), 2);
+        double ry = Math.pow(this.y - (uav.y() + pt.y), 2);
+        double rz = Math.pow(0 - (uav.z() + pt.z), 2);
+        
+        return Math.sqrt(rx + ry + rz);     
+    }
+    
+    public boolean withinRange(UAV uav, double mx, double my, double mz) {
+        
+        double result = getNetPower(uav, mx, my, mz);
+        
+        
+        if (result == 0.0) return false;
+        else return true;
+    }
+    
+    public boolean withinRange(UAV uav) {
+        
+        double result = getNetPower(uav, 0, 0, 0);
+
+        
+        if (result == 0.0) return false;
+        else return true;
+    }
+    
+    public String toString() {
+        return "x: " + x + " y: " + y;        
     }
     
     private int indexOfLargestPower() {
@@ -108,7 +143,7 @@ public class Terminal {
         }
         return itf;
     }
-    
+
     /**
      * @param uav - the target used to calculate power with respect to this terminal.
      * @param mx - the intended moving value in x direction 
@@ -135,7 +170,9 @@ public class Terminal {
          */
         double power = Environment.TRANSMIT_POWER - pathLoss(degree, distance);
         
-        if (DB_THRESHOLD && power < DB_BOUNDARY) return 0; 
+//        System.out.println("power: " + power );
+        
+//        if (DB_THRESHOLD && power < DB_BOUNDARY) return 0.0; 
         return dBmToMiliWatt(power);
     }
     
@@ -165,10 +202,8 @@ public class Terminal {
     
     public static void main(String[] args) {
         
-        int[] a = {31, 22, 2, 27, 1, 23, 13, 23, 25, 2, 9, 12, 26, 1, 25, 24, 26, 25, 23, 28};
+        Terminal t = new Terminal(0, 0, 0);
         
-        double res = Math.sqrt(StdStats.var(a) * (19) / 20);
-
-        System.out.println(res);
+        System.out.println(t.angleToUAV(1, 0, Math.sqrt(3.0)));
     }
 }
