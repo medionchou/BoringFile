@@ -123,11 +123,17 @@ public class GameUAV extends UAV {
                     hasTerm = true;
                 }
             }                    
-//            System.out.println("Owned: " + owned);
-//            System.out.println("Nonowned: " + nonowned);
-//            System.out.println("Potential: " + potentialTerms);
-//            System.out.println("Position: " + toString());
-            each_payoff = payoff(owned, tmp) + 0.1 * payoff(nonowned, tmp);
+
+            if (getID() == 1) {
+                System.out.println("\nOwned: " + owned.size());
+                System.out.println("Nonowned: " + nonowned.size());
+                System.out.println("Potential: " + potentialTerms.size());
+                System.out.println("Position: " + toString());
+                System.out.println("PM: " + tmp);
+            }
+            each_payoff = owned.size() * Math.pow(Math.E, payoff(owned, tmp, true)) +
+                    0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));
+            if (getID() == 1)  System.out.println("\nStrategy: " + st + " Payoff: " + each_payoff);
            
             if (each_payoff > payoff) {
                 payoff = each_payoff;
@@ -136,20 +142,22 @@ public class GameUAV extends UAV {
             owned.clear();
             nonowned.clear();
         }
+        if (getID() == 1) System.out.println("\nSelected Move: " + move );
 
         if (hasTerm) return move;
         else return null;
     }
     
-    private double payoff(HashSet<Terminal> termSet, Point pt) {
-        double m = 0.0;
+    private double payoff(HashSet<Terminal> termSet, Point pt, boolean isOwned) {
+        double distance = 0.0;
         
         for (Terminal t : termSet) {
-            
-            m += (1/ (Environment.STEP + t.distance(this, pt))) * potentialTerms.get(t);
+            distance += t.distance(this, pt);
         }
         
-        return m;
+        if (getID() == 1)  System.out.print("distance: " + distance + " ");
+        if (distance == 0) return 0.0;
+        return termSet.size() / distance;
     }
     
     private Point randomPoint(int grid_size) {

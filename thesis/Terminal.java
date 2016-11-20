@@ -6,8 +6,8 @@ import edu.princeton.cs.algs4.StdStats;
 
 public class Terminal {
     
-//    public static boolean DB_THRESHOLD = false;
-//    private final static double DB_BOUNDARY = -100.0;
+    public static boolean DB_THRESHOLD = false;
+    private final static double DB_BOUNDARY = -100.0;
     private final static int NOT_INITIALIZED = -1;
 
     private double x;
@@ -58,9 +58,10 @@ public class Terminal {
             double tmp = net_power[uavID];
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
             
-//            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
-            return net_power[uavID] / interference;
-//            return net_power[uavID] / (interference == 0 ? net_power[uavID] : interference);
+            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
+            
+            if (interference == 0) return 15.0;
+            else return tmp / interference;
         }
         else {
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
@@ -73,10 +74,9 @@ public class Terminal {
         net_power[uavID] = getNetPower(uav[uavID], 0, 0, 0); // what the fuck
         
         if (indexOfLargestPower() == uavID) {
-            double tmp = net_power[uavID];
-//            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
-            return net_power[uavID] / interference;
-//            return net_power[uavID] / (interference == 0 ? net_power[uavID] : interference);
+            if (DB_THRESHOLD && net_power[uavID] == 0.0) return 0.0d;  
+            if (interference == 0) return 15.0;
+            else return net_power[uavID] / interference;
         }
         else {
             return 0.0d;
@@ -170,9 +170,8 @@ public class Terminal {
          */
         double power = Environment.TRANSMIT_POWER - pathLoss(degree, distance);
         
-//        System.out.println("power: " + power );
         
-//        if (DB_THRESHOLD && power < DB_BOUNDARY) return 0.0; 
+        if (DB_THRESHOLD && power < DB_BOUNDARY) return 0.0; 
         return dBmToMiliWatt(power);
     }
     

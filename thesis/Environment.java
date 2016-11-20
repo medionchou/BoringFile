@@ -25,7 +25,7 @@ public class Environment {
 	public static final int MAX_HEIGHT = 5;
 	public static final double TRANSMIT_POWER = 46;
 	public static final double STEP = 0.1;
-	public static final double Z_WEIGHT = 1; //whether UAV should consider moving z-coordination.
+	public static final double Z_WEIGHT = 0; //whether UAV should consider moving z-coordination.
 	public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
 	public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
 	public static final String UAV_RANDOM = "UAV_RANDOM";
@@ -48,7 +48,7 @@ public class Environment {
 	}
 	
 	public void setPowerThreshold(boolean val) {
-//	    Terminal.DB_THRESHOLD = val;	    
+	    Terminal.DB_THRESHOLD = val;	    
 	}
 
 	public void exportFile(String filename) {
@@ -75,18 +75,20 @@ public class Environment {
 	}
 
 	public void simulate() {
-//	    Scanner s = new Scanner(System.in);
+	    Scanner s = new Scanner(System.in);
 
 		for (int i = 0; i < 10000; i++) {
 			int[] seq = sg.sequence(UAV_NUM);
 			
-			if ((i + 1) % 1000 == 0)
+			if ((i + 1) % 1000 == 0) {
 				System.out.println("Iteration: " + (i + 1));
+				
+			}
 
 			for (int j = 0; j < seq.length; j++) {
 				uav[seq[j]].run(grid);
 			}
-//			s.nextLine();
+			s.nextLine();
 		}
 
 		double avs = 0d;
@@ -111,8 +113,6 @@ public class Environment {
 			throw new NullPointerException("Arguments can't be null");
 		Point[] pt = getUAVLocs(uavDistri);
 		uav = new UAV[pt.length];
-		
-		System.out.println("Selected UAV type: " + uavType);
 
 		switch (uavType) {
 		case ReferenceUAV:
@@ -141,7 +141,7 @@ public class Environment {
             sg = GameUAV.SEQUENCE_GENERATOR;
             break; 
 		}
-		System.out.println("Finished");
+		System.out.println("UAV Initialization Finished");
 	}
 
 	private void initTerms(String type) {
@@ -157,6 +157,7 @@ public class Environment {
 			read_file(type);
 			break;
 		}
+		System.out.println("Terminal Initialization Finished");
 	}
 	
 	public void outFinalLoc(String filename) throws FileNotFoundException {
@@ -174,6 +175,8 @@ public class Environment {
 	    }
 	    
 	    pw.close();
+	    
+	    System.out.println("Generate " + filename );
 	}
 
 	public String toString() {
@@ -216,7 +219,6 @@ public class Environment {
 				Scanner sc = new Scanner(new File(uavDistri));
 				pt = new Point[sc.nextInt()];
 				UAV_NUM = pt.length;
-				System.out.println("UAV num: " + UAV_NUM);
 				for (int i = 0; i < pt.length; i++) {
 					pt[i] = new Point(sc.nextDouble(), sc.nextDouble(), sc.nextDouble());
 				}
@@ -329,17 +331,32 @@ public class Environment {
 		}
 	}
 
-	public static void main(String[] args) throws Exception{
-
-		Environment e = new Environment("poisson_distribution3.txt", "uavConfig_height300m.txt", UAVType.ReferenceUAV);
-		e.setPowerThreshold(false);
+	public static void main(String[] args) throws Exception {
+	    
+//	    String termConfig = "poisson_distribution3.txt";
+//	    String uavConfig = "uavConfig_height300m.txt";
+//	    UAVType type = UAVType.GameUAV;
+	    
+	    String termConfig = "./test/test_term.txt";
+	    String uavConfig = "./test/test_uav.txt";
+	    UAVType type = UAVType.GameUAV;
+	    
+		Environment e = new Environment(termConfig, uavConfig, type);
+		e.setPowerThreshold(true);
 		
-//		System.out.println(Terminal.DB_THRESHOLD);
-		System.out.println("Start simulation ");
+		System.out.println("UAV num:\t" + UAV_NUM);
+		System.out.println("Terminal num:\t" + e.terminal_num);
+		System.out.println("\nStart simulation");
+		System.out.println("Terminal configure file name:\t" + termConfig);
+		System.out.println("UAV configure file name:\t" + uavConfig);
+		System.out.println("Selected UAV Type:\t\t" + type);
+		System.out.println("PThreash -100 dBm is set to:\t" + Terminal.DB_THRESHOLD);
+		
 		
 		e.simulate();
 		
-		e.outFinalLoc("./result/final_loc_ref.txt");
+		e.outFinalLoc("./test/test_final_loc_" + type + ".txt");
+//		e.outFinalLoc("./result/final_loc_" + type + ".txt");
 	}
 
 }
