@@ -70,6 +70,7 @@ public class GameUAV extends UAV {
                 }
             }
         }
+        if (si_deno == 0) System.out.println(potentialTerms);
         System.out.println("Terms: " + si_deno);
         if (si_deno == 0)
             si_deno = 1;
@@ -86,13 +87,10 @@ public class GameUAV extends UAV {
         collectTerms(grid, grid_size);
         
         if (potentialTerms.size() == 0) { // random walk
-            moveByPoint(randomPoint(grid_size), grid_size);                        
+            moveByPoint(randomPoint(grid_size), grid_size);    
         } else {
             Point p = bestStrategy();
-            if (p == null) {
-                moveByPoint(randomPoint(grid_size), grid_size);
-                return;
-            }
+            if (p == null) moveByPoint(randomPoint(grid_size), grid_size);
             else moveByPoint(p, grid_size);
 
             for (Iterator<Entry<Terminal, Integer>> it =  potentialTerms.entrySet().iterator(); it.hasNext(); ) {
@@ -124,16 +122,16 @@ public class GameUAV extends UAV {
                 }
             }                    
 
-            if (getID() == 1) {
-                System.out.println("\nOwned: " + owned.size());
-                System.out.println("Nonowned: " + nonowned.size());
-                System.out.println("Potential: " + potentialTerms.size());
-                System.out.println("Position: " + toString());
-                System.out.println("PM: " + tmp);
-            }
+//            if (getID() == 0) {
+//                System.out.println("\nOwned: " + owned.size());
+//                System.out.println("Nonowned: " + nonowned.size());
+//                System.out.println("Potential: " + potentialTerms.size());
+//                System.out.println("Position: " + toString());
+//                System.out.println("PM: " + tmp);
+//            }
             each_payoff = owned.size() * Math.pow(Math.E, payoff(owned, tmp, true)) +
                     0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));
-            if (getID() == 1)  System.out.println("\nStrategy: " + st + " Payoff: " + each_payoff);
+//            if (getID() == 0)  System.out.println("\nStrategy: " + st + " Payoff: " + each_payoff);
            
             if (each_payoff > payoff) {
                 payoff = each_payoff;
@@ -142,7 +140,7 @@ public class GameUAV extends UAV {
             owned.clear();
             nonowned.clear();
         }
-        if (getID() == 1) System.out.println("\nSelected Move: " + move );
+//        if (getID() == 0) System.out.println("\nSelected Move: " + move );
 
         if (hasTerm) return move;
         else return null;
@@ -155,7 +153,7 @@ public class GameUAV extends UAV {
             distance += t.distance(this, pt);
         }
         
-        if (getID() == 1)  System.out.print("distance: " + distance + " ");
+//        if (getID() == 0)  System.out.print("distance: " + distance + " ");
         if (distance == 0) return 0.0;
         return termSet.size() / distance;
     }

@@ -1,5 +1,6 @@
 package thesis;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -13,11 +14,13 @@ import java.util.Scanner;
 import java.util.stream.IntStream;
 
 import edu.princeton.cs.algs4.Merge;
+import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdStats;
 
 public class Environment {
 
+    public static boolean DRAW = true;
 	public static int UAV_NUM = 20;
 	public static int TERMINAL_NUM = 350;
 	public static int GRID_SIZE = 60;
@@ -29,6 +32,7 @@ public class Environment {
 	public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
 	public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
 	public static final String UAV_RANDOM = "UAV_RANDOM";
+
 
 	private Grid[][] grid;
 	private UAV[] uav;
@@ -73,11 +77,35 @@ public class Environment {
 			System.out.println(e.toString());
 		}
 	}
-
+	
+	private void draw(int current) {
+	    StdDraw.enableDoubleBuffering();
+	    StdDraw.setPenColor(Color.CYAN);
+	    for (int i = 0; i < terminal_num; i++) {
+	        StdDraw.point(x[i], y[i]);
+	    }
+	        
+	    
+	    for (int i = 0; i < uav.length; i++) {
+	        if (i == current) StdDraw.setPenColor(Color.RED);
+	        else if (StdDraw.getPenColor() != Color.BLACK) StdDraw.setPenColor(Color.BLACK);
+	        StdDraw.point(uav[i].x(), uav[i].y());
+	    }
+	    StdDraw.show();
+//	    while (!StdDraw.hasNextKeyTyped());
+//	    StdDraw.nextKeyTyped();
+	    StdDraw.clear();
+	}
+	
 	public void simulate() {
-	    Scanner s = new Scanner(System.in);
-
-		for (int i = 0; i < 10000; i++) {
+//	    Scanner s = new Scanner(System.in);
+	    
+	    if (DRAW) {
+	        StdDraw.setScale(0, grid_size);
+	        StdDraw.setPenRadius(0.02);
+	    }
+	    
+		for (int i = 0; i < 1000; i++) {
 			int[] seq = sg.sequence(UAV_NUM);
 			
 			if ((i + 1) % 1000 == 0) {
@@ -86,9 +114,11 @@ public class Environment {
 			}
 
 			for (int j = 0; j < seq.length; j++) {
+//			    if (DRAW) draw(seq[j]);
 				uav[seq[j]].run(grid);
+//				if (DRAW) draw(seq[j]);
 			}
-			s.nextLine();
+			if (DRAW) draw(-1);
 		}
 
 		double avs = 0d;
@@ -333,19 +363,20 @@ public class Environment {
 
 	public static void main(String[] args) throws Exception {
 	    
-//	    String termConfig = "poisson_distribution3.txt";
-//	    String uavConfig = "uavConfig_height300m.txt";
-//	    UAVType type = UAVType.GameUAV;
-	    
-	    String termConfig = "./test/test_term.txt";
-	    String uavConfig = "./test/test_uav.txt";
+	    String termConfig = "cluster5_n360.txt";
+	    String uavConfig = "uavConfig_height300m.txt";
 	    UAVType type = UAVType.GameUAV;
+	    
+//	    String termConfig = "./test/test_term.txt";
+//	    String uavConfig = "./test/test_uav.txt";
+//	    UAVType type = UAVType.GameUAV;
 	    
 		Environment e = new Environment(termConfig, uavConfig, type);
 		e.setPowerThreshold(true);
 		
 		System.out.println("UAV num:\t" + UAV_NUM);
 		System.out.println("Terminal num:\t" + e.terminal_num);
+		System.out.println("Grid size:\t" + e.grid_size);
 		System.out.println("\nStart simulation");
 		System.out.println("Terminal configure file name:\t" + termConfig);
 		System.out.println("UAV configure file name:\t" + uavConfig);
@@ -355,8 +386,8 @@ public class Environment {
 		
 		e.simulate();
 		
-		e.outFinalLoc("./test/test_final_loc_" + type + ".txt");
-//		e.outFinalLoc("./result/final_loc_" + type + ".txt");
+//		e.outFinalLoc("./test/test_final_loc_" + type + ".txt");
+		e.outFinalLoc("./result/final_loc_" + type + ".txt");
 	}
 
 }
