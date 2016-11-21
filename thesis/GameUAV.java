@@ -116,9 +116,12 @@ public class GameUAV extends UAV {
                 if (t.withinRange(this)) {
                     double sir = t.peekSIR(getID(), tmp.x, tmp.y, tmp.z);
                     
-                    if (sir != 0.0d) owned.add(t); 
+                    if (sir != 0.0d) {
+                        owned.add(t);
+                        hasTerm = true;
+                    }
                     else nonowned.add(t);
-                    hasTerm = true;
+                  
                 }
             }                    
 
@@ -129,8 +132,8 @@ public class GameUAV extends UAV {
 //                System.out.println("Position: " + toString());
 //                System.out.println("PM: " + tmp);
 //            }
-            each_payoff = owned.size() * Math.pow(Math.E, payoff(owned, tmp, true)) +
-                    0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));
+            each_payoff = owned.size() * Math.pow(Math.E, payoff(owned, tmp, true));/* +
+                    0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));*/
 //            if (getID() == 0)  System.out.println("\nStrategy: " + st + " Payoff: " + each_payoff);
            
             if (each_payoff > payoff) {
@@ -159,13 +162,13 @@ public class GameUAV extends UAV {
     }
     
     private Point randomPoint(int grid_size) {
-        if (rp == null || rp.isClose(x(), y(), z())) {
+        if (rp == null || rp.isClose(x(), y(), 0)) {
             int x = getCoordinate(grid_size, (int)x());
             int y = getCoordinate(grid_size, (int)y());
             
             rp = new Point(x, y, 0);
-            double distance = rp.distance(x(), y(), 0);
-            vector = new Point((rp.x - x()) / distance, (rp.y -y()) / distance, 0);
+            double distance = rp.distance(x(), y(), 0) * Math.sqrt(1 / Environment.STEP);
+            vector = new Point((rp.x - x()) / distance, (rp.y - y()) / distance, 0);
         }
         return vector;
     }

@@ -31,11 +31,10 @@ public class Point {
     }
     
     public boolean isClose(double x, double y, double z) {
-        double rx = Math.pow(this.x - x, 2);
-        double ry = Math.pow(this.y - y, 2);
-        double rz = Math.pow(this.z - z, 2);
         
-        if ((rx+ry+rz) <= 1) return true;
+        double distance = distance(x, y, z);
+        
+        if (Math.sqrt(distance) < Environment.STEP + 1) return true;
         else return false;
     }   
     

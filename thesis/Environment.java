@@ -24,6 +24,7 @@ public class Environment {
 	public static int UAV_NUM = 20;
 	public static int TERMINAL_NUM = 350;
 	public static int GRID_SIZE = 60;
+	public static int ITERATION = 10000;
 	public static final int MAX_WEIGHT = 5;
 	public static final int MAX_HEIGHT = 5;
 	public static final double TRANSMIT_POWER = 46;
@@ -105,7 +106,7 @@ public class Environment {
 	        StdDraw.setPenRadius(0.02);
 	    }
 	    
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < ITERATION; i++) {
 			int[] seq = sg.sequence(UAV_NUM);
 			
 			if ((i + 1) % 1000 == 0) {
@@ -363,16 +364,14 @@ public class Environment {
 
 	public static void main(String[] args) throws Exception {
 	    
-	    String termConfig = "cluster5_n360.txt";
+	    String termConfig = "cluster3_n383.txt";
 	    String uavConfig = "uavConfig_height300m.txt";
-	    UAVType type = UAVType.GameUAV;
-	    
-//	    String termConfig = "./test/test_term.txt";
-//	    String uavConfig = "./test/test_uav.txt";
-//	    UAVType type = UAVType.GameUAV;
+	    UAVType type = UAVType.ReferenceUAV;
 	    
 		Environment e = new Environment(termConfig, uavConfig, type);
 		e.setPowerThreshold(true);
+		Environment.ITERATION = 1000;
+		Environment.DRAW = true;
 		
 		System.out.println("UAV num:\t" + UAV_NUM);
 		System.out.println("Terminal num:\t" + e.terminal_num);
@@ -385,28 +384,8 @@ public class Environment {
 		
 		
 		e.simulate();
-		
-//		e.outFinalLoc("./test/test_final_loc_" + type + ".txt");
+
 		e.outFinalLoc("./result/final_loc_" + type + ".txt");
 	}
 
 }
-
-// File f = new File("test.txt");
-//
-// try {
-// PrintWriter pw = new PrintWriter(f);
-// pw.write("360 60\n");
-//
-// for (int i = 0; i < 60; i++) {
-// for (int j = 0; j < 60; j++) {
-// if (j % 10 == 5) pw.write(i + " " + j + " " + 1 + "\n");
-// }
-// }
-//
-//
-// pw.close();
-// } catch (IOException e) {
-// // TODO Auto-generated catch block
-// e.printStackTrace();
-// }
