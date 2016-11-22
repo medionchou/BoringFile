@@ -105,9 +105,27 @@ public class Environment {
 	        StdDraw.setScale(0, grid_size);
 	        StdDraw.setPenRadius(0.02);
 	    }
-	    
+	    boolean leave = false;
 		for (int i = 0; i < ITERATION; i++) {
 			int[] seq = sg.sequence(UAV_NUM);
+			if (StdDraw.hasNextKeyTyped()) {
+			    char d = StdDraw.nextKeyTyped();
+			    
+			    switch(d) {
+			    case 'K':
+			    case 'k':
+			        leave = true;
+			        break;
+			    case 'P':
+			    case 'p':
+			        while (true) {
+			            if (StdDraw.hasNextKeyTyped()) break;
+			        }
+			        break;
+			    }
+			}
+			
+			if (leave) break;
 			
 			if ((i + 1) % 1000 == 0) {
 				System.out.println("Iteration: " + (i + 1));
