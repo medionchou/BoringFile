@@ -146,4 +146,10 @@ public class OriginalUAV extends UAV {
 		return sb.toString();
 	}
 
+    @Override
+    public double steps() {
+        throw new UnsupportedOperationException("Steps Operation is not supported for OriginalUAV");
+//        return 0;
+    }
+
 }

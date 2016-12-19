@@ -16,6 +16,7 @@ public class ReferenceUAV extends UAV {
 
 	private double last_profit;
 	private Point last_move;
+	private double step;
 
 	public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -42,6 +43,7 @@ public class ReferenceUAV extends UAV {
 		super(x, y, z, isOpen);
 		last_profit = 0;
 		last_move = new Point(0.0, 0.0, 0.0);
+		step = 0.0;
 	}
 
 	@Override
@@ -68,17 +70,27 @@ public class ReferenceUAV extends UAV {
 				} 
 			}
 		}
+		
+//		System.out.println("******* Who I am *********: " + getID());
 
 		if (si_deno > 0) {
 			double si = si_no / si_deno;
-			if (last_profit > si)
+			if (last_profit >= si) {
 				last_move = randomPoint(grid_size);
-
+//				System.out.println("No improvement !!");
+			}
+//			System.out.println("last_profit: " + last_profit);
 			last_profit = si;
+//			System.out.println("profit: " + si);
+//			System.out.println("move: " + last_move);
 		} else {
 			last_move = randomPoint(grid_size);
+//			System.out.println("no terms random_move: " + last_move);
 		}
-
+		
+		
+		if (!last_move.isZero()) step += Environment.STEP;
+		
 		if (last_move.z != 0) moveByPoint(last_move, Environment.MAX_HEIGHT);
 		else moveByPoint(last_move, grid_size);
 	}
@@ -124,10 +136,8 @@ public class ReferenceUAV extends UAV {
 				}
 			}
 		}
-		System.out.println("Terms: " + si_deno);
-		if (si_deno == 0)
-			si_deno = 1;
-
+//		System.out.println("Terms: " + si_deno);
+		
 		res[0] = si_no;
 		res[1] = si_deno;
 
@@ -146,4 +156,9 @@ public class ReferenceUAV extends UAV {
 	public static void main(String[] args) {
 
 	}
+
+    @Override
+    public double steps() {
+        return step;
+    }
 }

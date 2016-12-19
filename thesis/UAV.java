@@ -5,7 +5,7 @@ import java.util.Random;
 
 import edu.princeton.cs.algs4.StdRandom;
 
-public abstract class UAV {
+public abstract class UAV implements StepCounting {
 
     public static int ID = 0; //for automatically increment id
     

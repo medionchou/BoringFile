@@ -173,4 +173,9 @@ public class OptimalGameModelUAV extends UAV {
 		System.out.println(Double.compare(Double.MIN_VALUE, Double.MIN_VALUE));
 	}
 
+    @Override
+    public double steps() {
+        throw new UnsupportedOperationException("Steps Operation is not supported for OriginalUAV");
+    }
+
 }

@@ -1,15 +1,21 @@
 package thesis;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import edu.princeton.cs.algs4.StdRandom;
+
 public class GameUAV extends UAV {
     
+    public static double COST_COEF = 0.1;
+    public static double THRESHOLD_IMPROVEMENT = 1.0;
     // 14 is the theoretical maximal distance which signal is able to travel based on 46dBm.
     private static final int BOUNDARY = 14 + (int)Math.ceil(Environment.STEP);
     
@@ -17,6 +23,8 @@ public class GameUAV extends UAV {
     private HashMap<Terminal, Integer> potentialTerms;
     private Point rp;
     private Point vector;
+    private double step;
+    private double last_payoff;
     
     public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -42,6 +50,8 @@ public class GameUAV extends UAV {
     public GameUAV(double x, double y, double z, boolean isOpen) {
         super(x, y, z, isOpen);
         potentialTerms = new HashMap<>();
+        step = 0.0;
+        last_payoff = 0.0;
     }
 
     @Override
@@ -70,10 +80,8 @@ public class GameUAV extends UAV {
                 }
             }
         }
-        if (si_deno == 0) System.out.println(potentialTerms);
-        System.out.println("Terms: " + si_deno);
-        if (si_deno == 0)
-            si_deno = 1;
+//        if (si_deno == 0) System.out.println(potentialTerms);
+//        System.out.println("Terms: " + si_deno);
         
         res[0] = si_no;
         res[1] = si_deno;
@@ -87,12 +95,18 @@ public class GameUAV extends UAV {
         collectTerms(grid, grid_size);
         
         if (potentialTerms.size() == 0) { // random walk
-            moveByPoint(randomPoint(grid_size), grid_size);    
+            moveByPoint(randomPoint(grid_size), grid_size);
+            step += Environment.STEP;
         } else {
             Point p = bestStrategy();
-            if (p == null) moveByPoint(randomPoint(grid_size), grid_size);
-            else moveByPoint(p, grid_size);
-
+            if (p == null) {
+                moveByPoint(randomPoint(grid_size), grid_size);
+                step += Environment.STEP;
+            }
+            else {
+                moveByPoint(p, grid_size);         
+                if (!p.isZero()) step += Environment.STEP;
+            }
             for (Iterator<Entry<Terminal, Integer>> it =  potentialTerms.entrySet().iterator(); it.hasNext(); ) {
                 Entry<Terminal, Integer> map = it.next();
                 if (!map.getKey().withinRange(this, 0, 0, 0)) it.remove();
@@ -101,52 +115,76 @@ public class GameUAV extends UAV {
     }
     
     private Point bestStrategy() {
-        
         Point move = new Point(0, 0, 0);
         HashSet<Terminal> owned = new HashSet<>();
         HashSet<Terminal> nonowned = new HashSet<>();
+        List<Point> bestLoc = new ArrayList<>();
         double payoff = 0.0d;
         boolean hasTerm = false;
-        
+//        System.out.println("\n *********** Who I am ********** : " + getID());
+//        System.out.println("\n *********** Where I am ********** : " + toString());
         for (Strategy st : Strategy.values()) {
             Point tmp = Util.getPointByStrategy(st);
             double each_payoff;
             
             for (Terminal t : potentialTerms.keySet()) {
-                if (t.withinRange(this)) {
-                    double sir = t.peekSIR(getID(), tmp.x, tmp.y, tmp.z);
-                    
-                    if (sir != 0.0d) {
-                        owned.add(t);
-                        hasTerm = true;
+                if (t.withinRange(this, tmp.x, tmp.y, tmp.z)) {
+                    boolean isClosest = t.isClosest(this);//
+                    if (isClosest) {
+                      owned.add(t);
+                      hasTerm = true;
                     }
                     else nonowned.add(t);
-                  
                 }
             }                    
 
-//            if (getID() == 0) {
-//                System.out.println("\nOwned: " + owned.size());
-//                System.out.println("Nonowned: " + nonowned.size());
-//                System.out.println("Potential: " + potentialTerms.size());
-//                System.out.println("Position: " + toString());
-//                System.out.println("PM: " + tmp);
-//            }
-            each_payoff = owned.size() * Math.pow(Math.E, payoff(owned, tmp, true));/* +
-                    0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));*/
-//            if (getID() == 0)  System.out.println("\nStrategy: " + st + " Payoff: " + each_payoff);
+
+//            System.out.println("\nOwned: " + owned.size() + " " + owned);
+//            System.out.println("Nonowned: " + nonowned.size());
+//            System.out.println("Potential: " + potentialTerms.size());
+//            System.out.println("Position: " + toString());
+//            System.out.println("PM: " + tmp);
+            
+            each_payoff = Math.pow(Math.E, payoff(owned, tmp, true)) * owned.size();// - (cost(st) / owned.size()) * COST_COEF;
+            /* +
+              0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));*/
+//            System.out.println("\nStrategy: " + st + " Payoff: " + each_payoff);
            
             if (each_payoff > payoff) {
                 payoff = each_payoff;
                 move = tmp;
+                bestLoc.clear();
+                bestLoc.add(tmp);
+            } else if (each_payoff == payoff) {
+                bestLoc.add(tmp);
             }
             owned.clear();
             nonowned.clear();
         }
-//        if (getID() == 0) System.out.println("\nSelected Move: " + move );
-
-        if (hasTerm) return move;
+        
+        
+        if (hasTerm) {
+            if (bestLoc.size() == 1) {
+//                System.out.println("move: " + move);
+                return move;
+            }
+            else {
+                int index = StdRandom.uniform(bestLoc.size());
+//                System.out.println("index: " + index + " size: " + bestLoc.size());
+//                System.out.println("move: " + bestLoc.get(index));
+                return bestLoc.get(index);
+            }
+        }
         else return null;
+    }
+    
+    private double cost(Strategy stg) {
+        switch (stg) {
+        case STILL:
+            return 0.0;
+        default:
+            return Environment.STEP;
+        }  
     }
     
     private double payoff(HashSet<Terminal> termSet, Point pt, boolean isOwned) {
@@ -156,7 +194,6 @@ public class GameUAV extends UAV {
             distance += t.distance(this, pt);
         }
         
-//        if (getID() == 0)  System.out.print("distance: " + distance + " ");
         if (distance == 0) return 0.0;
         return termSet.size() / distance;
     }
@@ -178,8 +215,7 @@ public class GameUAV extends UAV {
         Random r = new Random();
         do {
             tmp = r.nextInt(grid_size);
-
-        } while (tmp >= (axis - BOUNDARY) && tmp <= (axis + BOUNDARY));
+        } while (tmp >= (axis - BOUNDARY) && tmp <= (axis + BOUNDARY) && grid_size >= 50);
         
         return tmp;
     }
@@ -219,43 +255,13 @@ public class GameUAV extends UAV {
     
     
     public static void main(String[] args) {
-        GameUAV g1 = new GameUAV(38, 30, 3, true);
-       GameUAV g = new GameUAV(30, 30, 3, true);
-       Grid[][] gd = new Grid[60][60];
-//       Terminal.DB_THRESHOLD = true;
-       
-       for (int i = 0; i < gd.length; i++) {
-           for (int j = 0; j < gd.length; j++) {
-               gd[i][j] = new Grid();
-           }
-       }
-       UAV[] uav = new UAV[2];
-       uav[0] = g;
-       uav[1] = g1;
-       Terminal t1 = new Terminal(26, 30, 1);
-       Terminal t2 = new Terminal(34, 30, 1);
-       Terminal t3 = new Terminal(26, 36, 1);
-       Terminal t4 = new Terminal(34, 33, 1);
-       Terminal t5 = new Terminal(26, 24, 1);
-       Terminal t6 = new Terminal(34, 34, 1);
-       t1.setUAV(uav);
-       t2.setUAV(uav);
-       t3.setUAV(uav);
-       t4.setUAV(uav);
-       t5.setUAV(uav);
-       t6.setUAV(uav);
-       gd[26][30].addTerminal(t1);
-       gd[34][30].addTerminal(t2);
-       gd[26][36].addTerminal(t3);
-       gd[34][33].addTerminal(t4);
-       gd[26][24].addTerminal(t5);
-       gd[34][34].addTerminal(t6);
-               
-       
-       g.run(gd);
-       System.out.println();
-       g1.run(gd);
-       
-       System.out.println(g.potentialTerms);
+        Point p = new Point(0, 0, 0);
+        
+        System.out.println(p.isZero());
+    }
+
+    @Override
+    public double steps() {
+        return step;
     }
 }

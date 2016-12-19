@@ -83,30 +83,49 @@ public class Terminal {
         }
     }
     
-    public double distance(UAV uav, Point pt) {
-        double rx = Math.pow(this.x - (uav.x() + pt.x), 2);
-        double ry = Math.pow(this.y - (uav.y() + pt.y), 2);
-        double rz = Math.pow(0 - (uav.z() + pt.z), 2);
+    public double distance(UAV theuav, Point pt) {
+        double rx = Math.pow(this.x - (theuav.x() + pt.x), 2);
+        double ry = Math.pow(this.y - (theuav.y() + pt.y), 2);
+        double rz = Math.pow(0 - (theuav.z() + pt.z), 2);
         
         return Math.sqrt(rx + ry + rz);     
     }
     
-    public boolean withinRange(UAV uav, double mx, double my, double mz) {
+    public double distance(UAV theuav) {
+        double rx = Math.pow(this.x - theuav.x(), 2);
+        double ry = Math.pow(this.y - theuav.y(), 2);
+        double rz = Math.pow(0 - theuav.z(), 2);
         
-        double result = getNetPower(uav, mx, my, mz);
+        return Math.sqrt(rx + ry + rz);
+    }
+    
+    public boolean withinRange(UAV theuav, double mx, double my, double mz) {
+        
+        double result = getNetPower(theuav, mx, my, mz);
         
         
         if (result == 0.0) return false;
         else return true;
     }
     
-    public boolean withinRange(UAV uav) {
+    public boolean withinRange(UAV theuav) {
         
-        double result = getNetPower(uav, 0, 0, 0);
+        double result = getNetPower(theuav, 0, 0, 0);
 
         
         if (result == 0.0) return false;
         else return true;
+    }
+    
+    public boolean isClosest(UAV theuav) {
+        double dist = distance(theuav);
+        for (int i = 0; i < uav.length; i++) {
+            if (i != theuav.getID()) {
+                double tmp = distance(uav[i]);
+                if (tmp <= dist) return false;
+            }
+        }
+        return true;
     }
     
     public String toString() {
@@ -201,8 +220,10 @@ public class Terminal {
     
     public static void main(String[] args) {
         
-        Terminal t = new Terminal(0, 0, 0);
+        Terminal t = new Terminal(26.0, 30.0, 0);
+        UAV a = new GameUAV(29.6, 30.0, 0.3, false);
         
-        System.out.println(t.angleToUAV(1, 0, Math.sqrt(3.0)));
+        double r = t.distance(a, new Point(-0.1, 0.0, 0.0));
+        System.out.println(r);
     }
 }

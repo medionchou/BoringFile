@@ -1,5 +1,7 @@
 package thesis;
 
+import java.math.BigDecimal;
+
 public class Point {
 
     public double x;
@@ -28,6 +30,10 @@ public class Point {
     	this.x = pt.x;
     	this.y = pt.y;
     	this.z = pt.z;
+    }
+    
+    public boolean isZero() {
+        return x == 0.0 && y == 0.0 && z == 0.0;
     }
     
     public boolean isClose(double x, double y, double z) {
