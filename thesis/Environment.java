@@ -125,7 +125,7 @@ public class Environment {
         return false;
 	}
 	
-	public void simulate() { 
+	public double[] simulate() { 
 	    if (DRAW) {
 	        StdDraw.setCanvasSize(720, 720);
 	        StdDraw.setScale(0, grid_size);
@@ -148,10 +148,10 @@ public class Environment {
 				uav[seq[j]].run(grid);
 			}
 		}
-		printConsoleResult();
+		return printConsoleResult();
 	}
 	
-	private void printConsoleResult() {
+	private double[] printConsoleResult() {
 	  double avs = 0d;
       double res[];
       double step = 0.0;
@@ -167,10 +167,12 @@ public class Environment {
       double std = StdStats.stddev(term_dist);
       System.out.println("Standard deviation: " + std);
       System.out.println("Total Average Spectral Efficiency: " + avs / terminal_num);
-      System.out.println("Effective Average Spectral Efficiency: " + avs / IntStream.of(term_dist).sum());
       System.out.println("Total Terminal num: " + terminal_num);
       System.out.println("Terminal num: " + IntStream.of(term_dist).sum());
       System.out.println("Total steps: " + step);
+      
+      double[] a = {avs/terminal_num, IntStream.of(term_dist).sum(), step};
+      return a;
 	}
 
 	private void initUAV(String uavDistri, UAVType uavType) {
@@ -316,7 +318,7 @@ public class Environment {
 	private void uniform_distribution() {
 		Random r = new Random();
 		initGrids(grid_size, terminal_num);
-
+		
 		for (int i = 0; i < terminal_num; i++) {
 			x[i] = r.nextInt(grid_size);
 			y[i] = r.nextInt(grid_size);
@@ -398,7 +400,7 @@ public class Environment {
 		}
 	}
 	
-	  public static void generateClusterDataFromPython(String filename, int num_term, Object center, int grid_size, boolean isCenterLoc) throws Exception {
+	  public static void generateClusterDataFromPython(String filename, int num_term, Object center, float std, int grid_size, boolean isCenterLoc) throws Exception {
 	      String[] cmd = {
 	        "python",
 	        "./cluster_gen/cluster_gen.py",
@@ -406,6 +408,7 @@ public class Environment {
 	        String.valueOf(grid_size),
 	        String.valueOf(5),
 	        isCenterLoc ? (String) center : String.valueOf((int) center),
+	        String.valueOf(std),
 	        filename
 	      };
 
@@ -434,9 +437,11 @@ public class Environment {
 
 	
 	public static void oneTimeSimulation() throws Exception {
-        String termConfig = "cluster_with_grid20-100/cluster_grid100_term360.txt";
+        String termConfig = "cluster_with_grid60_term360/cluster_grid60_term360_std10.txt";
         String uavConfig = "uavConfig_height300m.txt";
-        UAVType type = UAVType.ReferenceUAV;
+//	    String termConfig = "poisson_distribution3.txt";
+//	    String uavConfig = "uavConfig_height300m.txt";
+        UAVType type = UAVType.GameUAV;
         
         Environment e = new Environment(termConfig, uavConfig, type);
         e.setPowerThreshold(true);
@@ -463,41 +468,87 @@ public class Environment {
         String termConfig = "poisson_distribution3.txt";
         String uavConfig = "uavConfig_height300m.txt";
         UAVType type = UAVType.GameUAV;
+        int TIMES = 10;
 
         UAV_NUM = 20;
         TERMINAL_NUM = 360;
         GRID_SIZE = 60;
-        for (int j = 0; j < 2; j++) {
-            for (int i = 1; i <= 10; i += 1) {
-                TERMINAL_NUM = i * 360;
-//                GRID_SIZE = i;
-                Environment e;
-                if (j == 0) e = new Environment("uniform_with_grid60/UNIFORM_DISTRIBUTION_term" + TERMINAL_NUM + ".txt", uavConfig, type);
-                else e = new Environment("uniform_with_grid60/UNIFORM_DISTRIBUTION_term" + TERMINAL_NUM + ".txt", uavConfig, type);
-                UAV.ID = 0;
-                System.out.println("Type " + type);
-                System.out.println("Grid_size " + GRID_SIZE);
-                System.out.println("Terminal_size " + TERMINAL_NUM);
-                Environment.ITERATION = 10000;
-                e.setPowerThreshold(true);
-                Environment.DRAW = false;
+        int std = 1;
+        double[][][] mean = new double[2][10][3];
+        for (int l = 0; l < TIMES; l++) {
+            for (int j = 0; j < 2; j++) {
+                if (j == 0) type = UAVType.GameUAV;
+                else type = UAVType.ReferenceUAV;
+                for (int i = 1, t = 0; i <= 10; i += 1 , t++) {
+//                    TERMINAL_NUM = i * 360;
+//                    GRID_SIZE = i;
+                    std = i;
+                    Environment e;
+                    System.out.println("Experiment num: " +  (l+1));
+                    String filename = "cluster_with_grid60_term360/cluster_grid" + 60 + "_term" + 360 + "_std" + i + ".txt";
+                    if (j == 0)
+                        e = new Environment(filename, uavConfig, type);
+                    else
+                        e = new Environment(filename, uavConfig, type);
+                    UAV.ID = 0;
+                    System.out.println("Configfile: " + filename);
+                    System.out.println("Type " + type);
+                    System.out.println("Grid_size " + GRID_SIZE);
+                    System.out.println("Terminal_size " + TERMINAL_NUM);
+                    System.out.println("Standard deviation " + std);
+                    Environment.ITERATION = 10000;
+                    e.setPowerThreshold(true);
+                    Environment.DRAW = false;
 
-                e.simulate();
-                //e.exportFile(Environment.NORMAL_DISTRIBUTION + "_grid" + GRID_SIZE + ".txt");
-                System.out.println("");
+                    double[] a = e.simulate();
+                    for (int k = 0; k < a.length; k++) {
+                        mean[j][t][k] += a[k];
+                        System.out.print(a[k] + " ");
+                    }
+                    System.out.println("");
+                    System.out.println("");
+                }
             }
-            type = UAVType.ReferenceUAV;
+        }
+        
+        for (int i = 0; i < 2; i++) {
+            if (i == 0) System.out.println("\nType: " + UAVType.GameUAV + "\n");
+            if (i == 1) System.out.println("\nType: " + UAVType.ReferenceUAV + "\n");
+            for (int j = 0; j < mean[0].length; j++) {
+                System.out.println("Simulation" + i + ":");
+                System.out.print("ASF: " + mean[i][j][0] / TIMES + " ");
+                System.out.print("Terminal: " + mean[i][j][1] / TIMES+ " ");
+                System.out.println("MM: " + mean[i][j][2] / TIMES);
+            }
         }
 
 	}
 
 	public static void main(String[] args) throws Exception {
 	    
-	    oneTimeSimulation();
+//	    oneTimeSimulation();
 //	    repetitiveSimulation();
-//	    for (int i = 360; i <= 3600; i += 360) {
-//	        generateClusterDataFromPython("cluster_grid60_term" + i + ".txt", i, "12-56 47-33 50-56 2-13 43-46", 60, true);
+	    
+//	    int[] size = {12, 56, 47, 33, 50, 56, 2, 13, 43, 46};
+//	    
+//	    for (int i = 1; i <= 10; i += 1) {
+//	        String s = "";
+//	        for (int j = 0; j < size.length; j++) {
+//	            
+//	            if (j == size.length -1) s += size[j] * i / 60;
+//	            else {
+//	                
+//	                s += size[j] * i / 60;
+//	                if (j % 2 == 0) s += "-";
+//	                else s += " ";
+//	            }
+//	            
+//	        }
+//	        System.out.println(s);
+//	        generateClusterDataFromPython("cluster_grid60_term360_std_" + i + ".txt"
+//                                           , 360, "12-56 47-33 50-56 2-13 43-46", (float)i, 60, true);
 //	    }
+	    //"20-93 78-55 83-93 3-21 71-76"
 //	    
 //	    for (int i = 0; i < 5; i++) {
 //	        int x = StdRandom.uniform(60);
@@ -505,6 +556,19 @@ public class Environment {
 //	        
 //	        System.out.print(x + "-" + y + " ");
 //	    }
+	    
+	    Scanner sc = new Scanner(new File("poisson_distribution3.txt"));
+	    
+	    String s = sc.nextLine();
+	    
+	    String[] test = s.split(" ");
+	    
+	    for (int i = 0; i < test.length; i++) {
+	        System.out.println(test[i]);
+	    }
+	    
+	    System.out.println(s);
+	    
 	}
 
 }

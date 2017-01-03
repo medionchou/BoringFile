@@ -109,7 +109,8 @@ public class GameUAV extends UAV {
             }
             for (Iterator<Entry<Terminal, Integer>> it =  potentialTerms.entrySet().iterator(); it.hasNext(); ) {
                 Entry<Terminal, Integer> map = it.next();
-                if (!map.getKey().withinRange(this, 0, 0, 0)) it.remove();
+                Terminal tmp = map.getKey();
+                if (!tmp.withinRange(this)) it.remove();
             }
         }
     }
@@ -145,6 +146,7 @@ public class GameUAV extends UAV {
 //            System.out.println("Position: " + toString());
 //            System.out.println("PM: " + tmp);
             
+//            each_payoff = payoff(owned, tmp, true) * owned.size();
             each_payoff = Math.pow(Math.E, payoff(owned, tmp, true)) * owned.size();// - (cost(st) / owned.size()) * COST_COEF;
             /* +
               0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));*/
@@ -204,8 +206,11 @@ public class GameUAV extends UAV {
             int y = getCoordinate(grid_size, (int)y());
             
             rp = new Point(x, y, 0);
-            double distance = rp.distance(x(), y(), 0) * Math.sqrt(1 / Environment.STEP);
-            vector = new Point((rp.x - x()) / distance, (rp.y - y()) / distance, 0);
+            double distance = rp.distance(x(), y(), 0);
+            
+            if (Double.compare(distance, 0.0) == 0) distance = Environment.STEP;
+            vector = new Point(Environment.STEP * (rp.x - x()) / distance, Environment.STEP * (rp.y - y()) / distance, 0);
+            
         }
         return vector;
     }
@@ -218,6 +223,10 @@ public class GameUAV extends UAV {
         } while (tmp >= (axis - BOUNDARY) && tmp <= (axis + BOUNDARY) && grid_size >= 50);
         
         return tmp;
+    }
+    
+    public Point tmp() {
+        return rp;
     }
    
     

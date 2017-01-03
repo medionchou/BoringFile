@@ -187,7 +187,7 @@ public class Terminal {
          * pathloss = Pt / Pr = log_10(Pt) - log_10(Pr)
          * therefore, log_10(Pr)(dBm) = log_10(Pt)(dBm) - pathloss
          */
-        double power = Environment.TRANSMIT_POWER - pathLoss(degree, distance);
+        double power = Environment.TRANSMIT_POWER - pathLoss(degree, distance, uav);
         
         
         if (DB_THRESHOLD && power < DB_BOUNDARY) return 0.0; 
@@ -198,15 +198,21 @@ public class Terminal {
         return Math.pow(10, dBm / 10);
     }
     
-    private double pathLoss(double degree, double distance) {
+    private double pathLoss(double degree, double distance, UAV uav) {
         if (degree > 90 || degree < 0) throw new IllegalArgumentException("degree outside of desired range 0 - 90");
         
         if (degree >= 0 && degree < 10) 
             return 98.4 + 20 * Math.log10(distance) + ((2.55 + degree) / (0.0594 + 0.0406 * degree));
         else if (degree >= 10 && degree <= 90)
             return 98.4 + 20 * Math.log10(distance) + ((-94.2 + degree) / (-3.44 + 0.0318 * degree));
-        else
+        else {
+            System.out.println(degree + " " + distance);
+            System.out.println(this);
+            GameUAV g = (GameUAV) uav;
+            System.out.println(g.tmp());
+            
             throw new IllegalArgumentException("Invalid argument");
+        }
     }
     
     private double angleToUAV(double uavX, double uavY, double uavZ) {
@@ -221,9 +227,8 @@ public class Terminal {
     public static void main(String[] args) {
         
         Terminal t = new Terminal(26.0, 30.0, 0);
-        UAV a = new GameUAV(29.6, 30.0, 0.3, false);
+        UAV a = new GameUAV(26.0, 30.0, -1, false);
         
-        double r = t.distance(a, new Point(-0.1, 0.0, 0.0));
-        System.out.println(r);
+  
     }
 }
