@@ -109,12 +109,6 @@ public class OptimalGameModelUAV extends UAV {
 		}
 
 	}
-	
-	@Override
-    public void setPartnetUAV(UAV[] uav) {
-	    // TODO Auto-generated method stub
-	    throw new UnsupportedOperationException("Operation is not supported for Ga");
-    }
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {
@@ -176,6 +170,18 @@ public class OptimalGameModelUAV extends UAV {
     @Override
     public double steps() {
         throw new UnsupportedOperationException("Steps Operation is not supported for OriginalUAV");
+    }
+
+    @Override
+    public void setOriginGridSize(int ogs) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public boolean isStable() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
 }

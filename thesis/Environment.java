@@ -36,6 +36,7 @@ public class Environment {
 	public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
 	public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
 	public static final String UAV_RANDOM = "UAV_RANDOM";
+	
 
 
 	private Grid[][] grid;
@@ -45,6 +46,7 @@ public class Environment {
 	private int[] weight;
 	private int terminal_num;
 	private int grid_size;
+	private int origin_grid_size;
 	private SequenceGenerator sg;
 
 	/**
@@ -54,6 +56,7 @@ public class Environment {
 	 * @param uavType - which type of UAV should be created. 
 	 */
 	public Environment(String type, String uavDistri, UAVType uavType) {
+	    origin_grid_size = -1;
 		grid_size = GRID_SIZE;
 		terminal_num = TERMINAL_NUM;
 		initTerms(type);
@@ -106,6 +109,7 @@ public class Environment {
 	}
 	
 	private boolean keyControl() {
+	    
         if (StdDraw.hasNextKeyTyped()) {
             char d = StdDraw.nextKeyTyped();
             
@@ -132,20 +136,32 @@ public class Environment {
 	        StdDraw.setPenRadius(0.02);
 	    }
 	    boolean leave = false;
+	    boolean stable;
+	    int count = 0;
 		for (int i = 0; i < ITERATION; i++) {
+		    stable = true;
 	        if (DRAW) draw(-1);
 //	        while (!StdDraw.hasNextKeyTyped());
+//	        System.out.println(uav[0]);
 			int[] seq = sg.sequence(UAV_NUM);
 
 			leave = keyControl();
 			if (leave) break;
 			
 			if ((i + 1) % 1000 == 0) {
-//				System.out.println("Iteration: " + (i + 1));
+				System.out.println("Iteration: " + (i + 1));
 			}
 
 			for (int j = 0; j < seq.length; j++) {
 				uav[seq[j]].run(grid);
+				stable &= uav[seq[j]].isStable();
+			}
+			if (stable) count++;
+			else count = 0;
+
+			if (count == 10) {
+			    count = 0;
+			    break;
 			}
 		}
 		return printConsoleResult();
@@ -185,25 +201,28 @@ public class Environment {
 		case ReferenceUAV:
 			for (int i = 0; i < uav.length; i++) {
 				uav[i] = new ReferenceUAV(pt[i].x, pt[i].y, pt[i].z, true);
+				if (origin_grid_size != -1) uav[i].setOriginGridSize(origin_grid_size);
 			}
 			sg = ReferenceUAV.SEQUENCE_GENERATOR;
 			break;
 		case OriginalUAV:
 			for (int i = 0; i < uav.length; i++) {
 				uav[i] = new OriginalUAV(pt[i].x, pt[i].y, pt[i].z, true);
+				if (origin_grid_size != -1) uav[i].setOriginGridSize(origin_grid_size);
 			}
 			sg = OriginalUAV.SEQUENCE_GENERATOR;
 			break; 
 		case OptimalGameModelUAV:
 			for (int i = 0; i < uav.length; i++) {
 				uav[i] = new OptimalGameModelUAV(pt[i].x, pt[i].y, pt[i].z, true);
+				if (origin_grid_size != -1) uav[i].setOriginGridSize(origin_grid_size);
 			}
 			sg = OptimalGameModelUAV.SEQUENCE_GENERATOR;
 			break;
 		case GameUAV:
 		    for (int i = 0; i < uav.length; i++) {
                 uav[i] = new GameUAV(pt[i].x, pt[i].y, pt[i].z, true);
-                uav[i].setPartnetUAV(uav);
+                if (origin_grid_size != -1) uav[i].setOriginGridSize(origin_grid_size);
             }
             sg = GameUAV.SEQUENCE_GENERATOR;
             break; 
@@ -274,6 +293,7 @@ public class Environment {
 	private Point[] getUAVLocs(String uavDistri) {
 		Point[] pt = null;
 		int offset = (grid_size - 60) / 2;
+		offset = 0;
 		switch (uavDistri) {
 		case UAV_RANDOM:
 			Random r = new Random();
@@ -383,8 +403,23 @@ public class Environment {
 	private void read_file(String filename) {
 		try {
 			Scanner sc = new Scanner(new File(filename));
-			terminal_num = sc.nextInt();
-			grid_size = sc.nextInt();
+			
+			String s = sc.nextLine();
+			String[] config = s.split(" ");
+			
+			if (config.length == 2) {
+			    terminal_num = Integer.parseInt(config[0]);
+			    grid_size = Integer.parseInt(config[1]);
+			    
+			} 
+			else if (config.length == 3) {
+			    terminal_num = Integer.parseInt(config[0]);
+	            grid_size = Integer.parseInt(config[1]); // show be bigger than origin size
+	            origin_grid_size = Integer.parseInt(config[2]); // origin
+	            
+	            if (grid_size < origin_grid_size) grid_size = origin_grid_size;
+			}
+
 			initGrids(grid_size, terminal_num);
 
 			for (int i = 0; i < terminal_num; i++) {
@@ -403,7 +438,7 @@ public class Environment {
 	  public static void generateClusterDataFromPython(String filename, int num_term, Object center, float std, int grid_size, boolean isCenterLoc) throws Exception {
 	      String[] cmd = {
 	        "python",
-	        "./cluster_gen/cluster_gen.py",
+	        "./cluster_gen/cluster_gen_sp.py",
 	        String.valueOf(num_term),
 	        String.valueOf(grid_size),
 	        String.valueOf(5),
@@ -437,10 +472,10 @@ public class Environment {
 
 	
 	public static void oneTimeSimulation() throws Exception {
-        String termConfig = "cluster_with_grid60_term360/cluster_grid60_term360_std10.txt";
+        String termConfig = "test.txt";
         String uavConfig = "uavConfig_height300m.txt";
-//	    String termConfig = "poisson_distribution3.txt";
-//	    String uavConfig = "uavConfig_height300m.txt";
+//	    String termConfig = "test/test_term.txt";
+//	    String uavConfig = "test/test_uav.txt";
         UAVType type = UAVType.GameUAV;
         
         Environment e = new Environment(termConfig, uavConfig, type);
@@ -465,7 +500,7 @@ public class Environment {
 	}
 	
 	public static void repetitiveSimulation() throws Exception {
-        String termConfig = "poisson_distribution3.txt";
+        String termConfig = "cluster5_n383.txt";
         String uavConfig = "uavConfig_height300m.txt";
         UAVType type = UAVType.GameUAV;
         int TIMES = 10;
@@ -527,25 +562,11 @@ public class Environment {
 	public static void main(String[] args) throws Exception {
 	    
 //	    oneTimeSimulation();
-//	    repetitiveSimulation();
+	    repetitiveSimulation();
 	    
-//	    int[] size = {12, 56, 47, 33, 50, 56, 2, 13, 43, 46};
-//	    
+//	    generateClusterDataFromPython("test.txt", 360, "12-56 47-33 50-56 2-13 43-46", (float)4, 60, true);
 //	    for (int i = 1; i <= 10; i += 1) {
-//	        String s = "";
-//	        for (int j = 0; j < size.length; j++) {
-//	            
-//	            if (j == size.length -1) s += size[j] * i / 60;
-//	            else {
-//	                
-//	                s += size[j] * i / 60;
-//	                if (j % 2 == 0) s += "-";
-//	                else s += " ";
-//	            }
-//	            
-//	        }
-//	        System.out.println(s);
-//	        generateClusterDataFromPython("cluster_grid60_term360_std_" + i + ".txt"
+//	        generateClusterDataFromPython("cluster_grid60_term360_std" + i + ".txt"
 //                                           , 360, "12-56 47-33 50-56 2-13 43-46", (float)i, 60, true);
 //	    }
 	    //"20-93 78-55 83-93 3-21 71-76"
@@ -556,18 +577,6 @@ public class Environment {
 //	        
 //	        System.out.print(x + "-" + y + " ");
 //	    }
-	    
-	    Scanner sc = new Scanner(new File("poisson_distribution3.txt"));
-	    
-	    String s = sc.nextLine();
-	    
-	    String[] test = s.split(" ");
-	    
-	    for (int i = 0; i < test.length; i++) {
-	        System.out.println(test[i]);
-	    }
-	    
-	    System.out.println(s);
 	    
 	}
 

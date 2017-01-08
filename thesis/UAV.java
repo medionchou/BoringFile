@@ -80,7 +80,9 @@ public abstract class UAV implements StepCounting {
     
     public abstract void run(Grid[][] grid);
     
-    public abstract void setPartnetUAV(UAV[] uav);
+    public abstract void setOriginGridSize(int ogs);
+    
+    public abstract boolean isStable();
     
     public static void main(String[] args) {
 

@@ -17,6 +17,8 @@ public class ReferenceUAV extends UAV {
 	private double last_profit;
 	private Point last_move;
 	private double step;
+	private int origin_grid_size;
+	private Point move;
 
 	public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -44,6 +46,7 @@ public class ReferenceUAV extends UAV {
 		last_profit = 0;
 		last_move = new Point(0.0, 0.0, 0.0);
 		step = 0.0;
+		origin_grid_size = -1;
 	}
 
 	@Override
@@ -103,21 +106,15 @@ public class ReferenceUAV extends UAV {
 		}
 	}
 	
-    /**
-     * Shall not call this method.
-     */
-    @Override
-    public void setPartnetUAV(UAV[] uav) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Operation is not supported for ReferenceUAV");
-    }
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {
-		int grid_size = grid.length;
+		int grid_size;
 		int si_deno = 0;
 		double si_no = 0.0d;
 		double[] res = new double[2];
+		 
+        grid_size = origin_grid_size == -1 ? grid.length : origin_grid_size;
 
 		for (int i = 0; i < grid_size; i++) {
 			for (int j = 0; j < grid_size; j++) {
@@ -161,4 +158,15 @@ public class ReferenceUAV extends UAV {
     public double steps() {
         return step;
     }
+
+    @Override
+    public void setOriginGridSize(int ogs) {
+        origin_grid_size = ogs;
+    }
+
+    @Override
+    public boolean isStable() {
+        return false;
+    }
+
 }

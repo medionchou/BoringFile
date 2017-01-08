@@ -94,14 +94,6 @@ public class OriginalUAV extends UAV {
         }
     }
     
-    /**
-     * Shall not call this method.
-     */
-    @Override
-    public void setPartnetUAV(UAV[] uav) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Operation is not supported for OriginalUAV");
-    }
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {
@@ -150,6 +142,18 @@ public class OriginalUAV extends UAV {
     public double steps() {
         throw new UnsupportedOperationException("Steps Operation is not supported for OriginalUAV");
 //        return 0;
+    }
+
+    @Override
+    public void setOriginGridSize(int ogs) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public boolean isStable() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
 }

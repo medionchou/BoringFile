@@ -19,12 +19,12 @@ public class GameUAV extends UAV {
     // 14 is the theoretical maximal distance which signal is able to travel based on 46dBm.
     private static final int BOUNDARY = 14 + (int)Math.ceil(Environment.STEP);
     
-    private UAV[] uav;
     private HashMap<Terminal, Integer> potentialTerms;
     private Point rp;
     private Point vector;
     private double step;
-    private double last_payoff;
+    private int origin_grid_size;
+    private Point move;
     
     public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -51,7 +51,7 @@ public class GameUAV extends UAV {
         super(x, y, z, isOpen);
         potentialTerms = new HashMap<>();
         step = 0.0;
-        last_payoff = 0.0;
+        origin_grid_size = -1;
     }
 
     @Override
@@ -91,8 +91,11 @@ public class GameUAV extends UAV {
 
     @Override
     public void run(Grid[][] grid) {
-        int grid_size = grid.length;
-        collectTerms(grid, grid_size);
+        int grid_size;
+          
+        grid_size = origin_grid_size == -1 ? grid.length : origin_grid_size;
+
+        collectTerms(grid, grid.length);
         
         if (potentialTerms.size() == 0) { // random walk
             moveByPoint(randomPoint(grid_size), grid_size);
@@ -106,6 +109,7 @@ public class GameUAV extends UAV {
             else {
                 moveByPoint(p, grid_size);         
                 if (!p.isZero()) step += Environment.STEP;
+                move = p;
             }
             for (Iterator<Entry<Terminal, Integer>> it =  potentialTerms.entrySet().iterator(); it.hasNext(); ) {
                 Entry<Terminal, Integer> map = it.next();
@@ -128,16 +132,28 @@ public class GameUAV extends UAV {
             Point tmp = Util.getPointByStrategy(st);
             double each_payoff;
             
+//            for (Terminal t : potentialTerms.keySet()) {
+//                if (t.withinRange(this, tmp.x, tmp.y, tmp.z)) {
+//                    boolean isClosest = t.isClosest(this);//
+//                    if (isClosest) {
+//                      owned.add(t);
+//                      hasTerm = true;
+//                    }
+//                    else nonowned.add(t);
+//                }
+//            }  
             for (Terminal t : potentialTerms.keySet()) {
-                if (t.withinRange(this, tmp.x, tmp.y, tmp.z)) {
-                    boolean isClosest = t.isClosest(this);//
-                    if (isClosest) {
-                      owned.add(t);
-                      hasTerm = true;
+                if (t.withinRange(this)) {
+                    double sir = t.peekSIR(getID(), 0, 0, 0);
+                    
+                    if (sir != 0.0d) {
+                        owned.add(t);
+                        hasTerm = true;
                     }
                     else nonowned.add(t);
+                  
                 }
-            }                    
+            }    
 
 
 //            System.out.println("\nOwned: " + owned.size() + " " + owned);
@@ -247,11 +263,6 @@ public class GameUAV extends UAV {
             }
         }
     }
-
-    @Override
-    public void setPartnetUAV(UAV[] uav) {
-        this.uav = uav;
-    }
     
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -272,5 +283,17 @@ public class GameUAV extends UAV {
     @Override
     public double steps() {
         return step;
+    }
+
+    @Override
+    public void setOriginGridSize(int ogs) {
+        origin_grid_size = ogs;   
+    }
+
+    @Override
+    public boolean isStable() {
+        if (move == null) return false;
+        if (move.x == 0 && move.y == 0) return true;
+        return false;
     }
 }
