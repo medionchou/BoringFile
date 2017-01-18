@@ -52,7 +52,7 @@ public class Terminal {
      */
     public double peekSIR(int uavID, double mx, double my, double mz) {
         double interference = collectITF(uavID);
-        net_power[uavID] = getNetPower(uav[uavID], mx, my, mz); 
+        net_power[uavID] = getNetPower(uav[uavID], mx, my, mz);
        
         if (indexOfLargestPower() == uavID) {
             double tmp = net_power[uavID];
@@ -70,6 +70,9 @@ public class Terminal {
     }
     
     public double getSIR(int uavID) {
+        
+        for (int i = 0; i < net_power.length; i++) net_power[i] = -1; // reset all UAV cached net_power.
+        
         double interference = collectITF(uavID);
         net_power[uavID] = getNetPower(uav[uavID], 0, 0, 0); // what the fuck
         
@@ -112,6 +115,17 @@ public class Terminal {
         
         double result = getNetPower(theuav, 0, 0, 0);
 
+        if (result == 0.0) return false;
+        else return true;
+    }
+    
+    public boolean isServed(UAV theuav) {
+        
+        Terminal.DB_THRESHOLD = true;
+        
+        double result = getSIR(theuav.getID());
+        
+        Terminal.DB_THRESHOLD = false;
         
         if (result == 0.0) return false;
         else return true;

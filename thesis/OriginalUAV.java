@@ -1,5 +1,6 @@
 package thesis;
 
+import java.util.List;
 import java.util.Random;
 
 import edu.princeton.cs.algs4.StdRandom;
@@ -145,15 +146,15 @@ public class OriginalUAV extends UAV {
     }
 
     @Override
-    public void setOriginGridSize(int ogs) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
     public boolean isStable() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public List<Point> movements() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

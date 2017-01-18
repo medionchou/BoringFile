@@ -1,6 +1,7 @@
 package thesis;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 public class OptimalGameModelUAV extends UAV {
@@ -172,16 +173,17 @@ public class OptimalGameModelUAV extends UAV {
         throw new UnsupportedOperationException("Steps Operation is not supported for OriginalUAV");
     }
 
-    @Override
-    public void setOriginGridSize(int ogs) {
-        // TODO Auto-generated method stub
-        
-    }
 
     @Override
     public boolean isStable() {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public List<Point> movements() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

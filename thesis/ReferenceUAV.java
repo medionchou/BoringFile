@@ -1,7 +1,9 @@
 package thesis;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import edu.princeton.cs.algs4.StdRandom;
@@ -17,8 +19,8 @@ public class ReferenceUAV extends UAV {
 	private double last_profit;
 	private Point last_move;
 	private double step;
-	private int origin_grid_size;
 	private Point move;
+	private HashSet<Point> trails;
 
 	public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -46,7 +48,7 @@ public class ReferenceUAV extends UAV {
 		last_profit = 0;
 		last_move = new Point(0.0, 0.0, 0.0);
 		step = 0.0;
-		origin_grid_size = -1;
+		trails = new HashSet<>();
 	}
 
 	@Override
@@ -54,6 +56,7 @@ public class ReferenceUAV extends UAV {
 		int grid_size = grid.length;
 		int si_deno = 0;
 		double si_no = 0.0d;
+		trails.add(new Point(this.x(), this.y(), this.z()));
 
 		for (int i = 0; i < grid_size; i++) {
 			for (int j = 0; j < grid_size; j++) {
@@ -74,21 +77,16 @@ public class ReferenceUAV extends UAV {
 			}
 		}
 		
-//		System.out.println("******* Who I am *********: " + getID());
 
 		if (si_deno > 0) {
 			double si = si_no / si_deno;
 			if (last_profit >= si) {
 				last_move = randomPoint(grid_size);
-//				System.out.println("No improvement !!");
 			}
-//			System.out.println("last_profit: " + last_profit);
+			
 			last_profit = si;
-//			System.out.println("profit: " + si);
-//			System.out.println("move: " + last_move);
 		} else {
 			last_move = randomPoint(grid_size);
-//			System.out.println("no terms random_move: " + last_move);
 		}
 		
 		
@@ -109,12 +107,12 @@ public class ReferenceUAV extends UAV {
 
 	@Override
 	public double[] getSpectrumAndTerms(Grid[][] grid) {
-		int grid_size;
+		int grid_size = grid.length;
 		int si_deno = 0;
+		int served_terminal = 0;
 		double si_no = 0.0d;
-		double[] res = new double[2];
-		 
-        grid_size = origin_grid_size == -1 ? grid.length : origin_grid_size;
+	    double st_avd = 0.d;
+		double[] res = new double[4];
 
 		for (int i = 0; i < grid_size; i++) {
 			for (int j = 0; j < grid_size; j++) {
@@ -125,7 +123,10 @@ public class ReferenceUAV extends UAV {
 
 				Terminal t = grid[i][j].getTerminal();
 				sir = t.getSIR(getID());
-
+                if (t.isServed(this)) {
+                    served_terminal += termNum;
+                    st_avd += t.distance(this) * termNum;
+                }
 				double tmp = UAV.ld(sir);
 				if (tmp > 0) {
 					si_no += tmp * termNum;
@@ -133,10 +134,11 @@ public class ReferenceUAV extends UAV {
 				}
 			}
 		}
-//		System.out.println("Terms: " + si_deno);
 		
 		res[0] = si_no;
 		res[1] = si_deno;
+		res[2] = served_terminal;
+        res[3] = st_avd;
 
 		return res;
 	}
@@ -160,13 +162,13 @@ public class ReferenceUAV extends UAV {
     }
 
     @Override
-    public void setOriginGridSize(int ogs) {
-        origin_grid_size = ogs;
+    public boolean isStable() {
+        return false;
     }
 
     @Override
-    public boolean isStable() {
-        return false;
+    public Iterable<Point> movements() {
+        return trails;
     }
 
 }

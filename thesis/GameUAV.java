@@ -23,8 +23,8 @@ public class GameUAV extends UAV {
     private Point rp;
     private Point vector;
     private double step;
-    private int origin_grid_size;
     private Point move;
+    private HashSet<Point> trails;
     
     public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
 
@@ -50,50 +50,56 @@ public class GameUAV extends UAV {
     public GameUAV(double x, double y, double z, boolean isOpen) {
         super(x, y, z, isOpen);
         potentialTerms = new HashMap<>();
+        trails = new HashSet<>();
         step = 0.0;
-        origin_grid_size = -1;
     }
 
     @Override
     public double[] getSpectrumAndTerms(Grid[][] grid) {
 
         int grid_size = grid.length;
-        collectTerms(grid, grid_size);
-        double[] res = new double[2];
+        double[] res = new double[4];
         int si_deno = 0;
+        int served_terminal = 0;
         double si_no = 0.0d;
+        double st_avd = 0.d;
         
-        for (Terminal t : potentialTerms.keySet()) {
-            
-            if (t.withinRange(this)) {
-                double sir;
+        
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                double sir = 0.0d;
+                int termNum = grid[i][j].getTermNum();
+                if (termNum == 0)
+                    continue;
 
+                Terminal t = grid[i][j].getTerminal();
                 sir = t.getSIR(getID());
                 
-                if (sir != 0.0d) {
-                    double tmp = UAV.ld(sir);
-
-                    if (tmp > 0) {
-                        si_no += tmp * potentialTerms.get(t);
-                        si_deno += potentialTerms.get(t);
-                    }
+                if (t.isServed(this)) {
+                    served_terminal += termNum;
+                    st_avd += t.distance(this) * termNum;
+                }
+                double tmp = UAV.ld(sir);
+                if (tmp > 0) {
+                    si_no += tmp * termNum;
+                    si_deno += termNum;
                 }
             }
         }
-//        if (si_deno == 0) System.out.println(potentialTerms);
-//        System.out.println("Terms: " + si_deno);
-        
+
         res[0] = si_no;
         res[1] = si_deno;
+        res[2] = served_terminal;
+        res[3] = st_avd;
         
         return res;
     }
 
     @Override
     public void run(Grid[][] grid) {
-        int grid_size;
-          
-        grid_size = origin_grid_size == -1 ? grid.length : origin_grid_size;
+        int grid_size = grid.length;
+        
+        trails.add(new Point(this.x(), this.y(), this.z()));      
 
         collectTerms(grid, grid.length);
         
@@ -162,7 +168,7 @@ public class GameUAV extends UAV {
 //            System.out.println("Position: " + toString());
 //            System.out.println("PM: " + tmp);
             
-//            each_payoff = payoff(owned, tmp, true) * owned.size();
+//            each_payoff = payoff(owned, tmp);
             each_payoff = Math.pow(Math.E, payoff(owned, tmp, true)) * owned.size();// - (cost(st) / owned.size()) * COST_COEF;
             /* +
               0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));*/
@@ -203,6 +209,19 @@ public class GameUAV extends UAV {
         default:
             return Environment.STEP;
         }  
+    }
+    
+    private double payoff(HashSet<Terminal> termSet, Point pt) {
+        double distance = 0.0;
+        double r;
+        
+        for (Terminal t : termSet) {
+            distance += t.peekSIR(this.getID(), pt.x, pt.y, pt.z);
+        }
+        
+        double tmp = UAV.ld(distance);
+        
+        return tmp/termSet.size();
     }
     
     private double payoff(HashSet<Terminal> termSet, Point pt, boolean isOwned) {
@@ -254,6 +273,7 @@ public class GameUAV extends UAV {
             if (i < 0 || i >= grid_size) continue;
             for (int j = y - BOUNDARY; j <= y + BOUNDARY; j++) {
                 if (j < 0 || j >= grid_size) continue;
+                
                 int terms = grid[i][j].getTermNum();
                 if (terms == 0) continue;
                 
@@ -286,14 +306,15 @@ public class GameUAV extends UAV {
     }
 
     @Override
-    public void setOriginGridSize(int ogs) {
-        origin_grid_size = ogs;   
-    }
-
-    @Override
     public boolean isStable() {
         if (move == null) return false;
         if (move.x == 0 && move.y == 0) return true;
         return false;
     }
+
+    @Override
+    public Iterable<Point> movements() {
+        return trails;
+    }
+
 }

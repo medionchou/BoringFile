@@ -1,6 +1,7 @@
 package thesis;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import edu.princeton.cs.algs4.StdRandom;
@@ -80,12 +81,11 @@ public abstract class UAV implements StepCounting {
     
     public abstract void run(Grid[][] grid);
     
-    public abstract void setOriginGridSize(int ogs);
-    
     public abstract boolean isStable();
     
+    public abstract Iterable<Point> movements();
+    
     public static void main(String[] args) {
-
         
     }
 }

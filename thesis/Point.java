@@ -56,6 +56,14 @@ public class Point {
         return "x:" + x + " y:" + y + " z:" + z  ;
     }
     
+    public static double distance(double x1, double y1, double z1, double x2, double y2, double z2) {
+        double rx = Math.pow(x1 - x2, 2);
+        double ry = Math.pow(y1 - y2, 2);
+        double rz = Math.pow(z1 - z2, 2);
+        
+        return Math.sqrt(rx + ry + rz);        
+    }
+    
     public static void main(String[] args) {
         Point p = new Point(1, 1, 1);
         

@@ -1,5 +1,7 @@
 package thesis;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
@@ -56,9 +58,40 @@ public class Util {
 	    bd = bd.setScale(places, RoundingMode.HALF_UP);
 	    return bd.doubleValue();
 	}
-	
-	public static void main(String[] args) {
-		
 
+    public static void fixedDistanceTerms(int interval, int grid_size, String filename) {
+	    if (interval <= 0) return;
+	    
+	    int center = grid_size / 2;	    
+	    int[][] g = new int[grid_size][grid_size];
+	    int term = 0;
+	    
+	    for (int i = 0; i < grid_size; i++) {
+	        if (i % interval != 0) continue;
+	        for (int j = 0; j < grid_size; j++) {
+	            if (j % interval != 0) continue;
+	        
+	            if (j >= (center - 8) && j <= (center + 8) && i >= (center - 8) && i <= (center + 8)) continue;
+	            g[i][j] = 1;
+	            term ++;
+	        }
+	    }
+        try {
+            File f = new File(filename);
+            PrintWriter pw = new PrintWriter(f);
+            pw.println(term + " " + grid_size);
+            for (int i = 0; i < grid_size; i++) {
+                for (int j = 0; j < grid_size; j++) {
+                    if (g[i][j] > 0)
+                        pw.println(i + " " + j + " " + 1);
+                }
+            }
+            pw.close();
+        } catch (Exception e) {
+
+        }
+	}
+
+	public static void main(String[] args) {
 	}
 }
