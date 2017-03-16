@@ -7,7 +7,6 @@ import edu.princeton.cs.algs4.StdStats;
 public class Terminal {
     
     public static boolean DB_THRESHOLD = false;
-    private final static double DB_BOUNDARY = -100.0;
     private final static int NOT_INITIALIZED = -1;
 
     private double x;
@@ -16,12 +15,14 @@ public class Terminal {
     private int avail_uav;
     private UAV[] uav;
     private double[] net_power; //cache uav net power value for speeding up calculation.
+    private boolean isCovered;
     
     public Terminal(double x, double y, int weight) {
         this.x = x;
         this.y = y;
         this.weight = weight;
         avail_uav = 1; // avoid divide by zero
+        isCovered = false;
     }
     
     public void setUAV(UAV[] uav) {
@@ -53,9 +54,10 @@ public class Terminal {
     public double peekSIR(int uavID, double mx, double my, double mz) {
         double interference = collectITF(uavID);
         net_power[uavID] = getNetPower(uav[uavID], mx, my, mz);
+        double tmp = net_power[uavID];
        
         if (indexOfLargestPower() == uavID) {
-            double tmp = net_power[uavID];
+//            double tmp = net_power[uavID];
             net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
             
             if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
@@ -78,6 +80,7 @@ public class Terminal {
         
         if (indexOfLargestPower() == uavID) {
             if (DB_THRESHOLD && net_power[uavID] == 0.0) return 0.0d;  
+            
             if (interference == 0) return 15.0;
             else return net_power[uavID] / interference;
         }
@@ -142,6 +145,18 @@ public class Terminal {
         return true;
     }
     
+    public boolean isCovered() {
+    	return isCovered;
+    }
+    
+    public void unsetCovered() {
+    	isCovered = false;
+    }
+    
+    public void setCovered() {
+    	isCovered = true;
+    }
+    
     public String toString() {
         return "x: " + x + " y: " + y;        
     }
@@ -204,7 +219,7 @@ public class Terminal {
         double power = Environment.TRANSMIT_POWER - pathLoss(degree, distance, uav);
         
         
-        if (DB_THRESHOLD && power < DB_BOUNDARY) return 0.0; 
+        if (DB_THRESHOLD && power < Environment.MDSP) return 0.0; 
         return dBmToMiliWatt(power);
     }
     
@@ -222,7 +237,7 @@ public class Terminal {
         else {
             System.out.println(degree + " " + distance);
             System.out.println(this);
-            GameUAV g = (GameUAV) uav;
+            MAD2T g = (MAD2T) uav;
             System.out.println(g.tmp());
             
             throw new IllegalArgumentException("Invalid argument");
@@ -241,7 +256,7 @@ public class Terminal {
     public static void main(String[] args) {
         
         Terminal t = new Terminal(26.0, 30.0, 0);
-        UAV a = new GameUAV(26.0, 30.0, -1, false);
+        UAV a = new MAD2T(26.0, 30.0, -1, false);
         
   
     }

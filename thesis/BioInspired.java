@@ -14,7 +14,7 @@ import edu.princeton.cs.algs4.StdRandom;
  * 
  * The UAV that randomly moves one unit choosing from 3 dimensions.  
  */
-public class ReferenceUAV extends UAV {
+public class BioInspired extends UAV {
 
 	private double last_profit;
 	private Point last_move;
@@ -43,7 +43,7 @@ public class ReferenceUAV extends UAV {
 
 	};
 
-	public ReferenceUAV(double x, double y, double z, boolean isOpen) {
+	public BioInspired(double x, double y, double z, boolean isOpen) {
 		super(x, y, z, isOpen);
 		last_profit = 0;
 		last_move = new Point(0.0, 0.0, 0.0);
@@ -124,6 +124,7 @@ public class ReferenceUAV extends UAV {
 				Terminal t = grid[i][j].getTerminal();
 				sir = t.getSIR(getID());
                 if (t.isServed(this)) {
+                	t.setCovered();
                     served_terminal += termNum;
                     st_avd += t.distance(this) * termNum;
                 }
@@ -170,5 +171,11 @@ public class ReferenceUAV extends UAV {
     public Iterable<Point> movements() {
         return trails;
     }
+
+	@Override
+	public void inspect(Grid[][] grid) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

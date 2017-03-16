@@ -18,9 +18,6 @@ public enum Strategy {
     public static Strategy randomStrategy() {
         return STRATEGY[r.nextInt(STRATEGY.length)];
     }
-    
-    
-    
 }
 
 

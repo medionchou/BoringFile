@@ -1,8 +1,7 @@
 package thesis;
 
 public enum UAVType {
-    ReferenceUAV,
-    OriginalUAV,
-    OptimalGameModelUAV,
-    GameUAV
+    BioInspired,
+    MAD2T,
+    PIA
 }

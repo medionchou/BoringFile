@@ -12,11 +12,11 @@ import java.util.Set;
 
 import edu.princeton.cs.algs4.StdRandom;
 
-public class GameUAV extends UAV {
+public class MAD2T extends UAV {
     
     public static double COST_COEF = 0.1;
     public static double THRESHOLD_IMPROVEMENT = 1.0;
-    // 14 is the theoretical maximal distance which signal is able to travel based on 46dBm.
+    // 14 is the theoretical maximal distance which signal is able to travel based on transmission power 46dBm.
     private static final int BOUNDARY = 14 + (int)Math.ceil(Environment.STEP);
     
     private HashMap<Terminal, Integer> potentialTerms;
@@ -47,7 +47,7 @@ public class GameUAV extends UAV {
 
     };
 
-    public GameUAV(double x, double y, double z, boolean isOpen) {
+    public MAD2T(double x, double y, double z, boolean isOpen) {
         super(x, y, z, isOpen);
         potentialTerms = new HashMap<>();
         trails = new HashSet<>();
@@ -76,6 +76,7 @@ public class GameUAV extends UAV {
                 sir = t.getSIR(getID());
                 
                 if (t.isServed(this)) {
+                	t.setCovered();
                     served_terminal += termNum;
                     st_avd += t.distance(this) * termNum;
                 }
@@ -169,6 +170,7 @@ public class GameUAV extends UAV {
 //            System.out.println("PM: " + tmp);
             
 //            each_payoff = payoff(owned, tmp);
+//            each_payoff = payoff(nonowned, tmp, true) * nonowned.size() + payoff(owned, tmp, true) * owned.size() * 10;
             each_payoff = Math.pow(Math.E, payoff(owned, tmp, true)) * owned.size();// - (cost(st) / owned.size()) * COST_COEF;
             /* +
               0.1 * nonowned.size() * Math.pow(Math.E, payoff(nonowned, tmp, false));*/
@@ -316,5 +318,27 @@ public class GameUAV extends UAV {
     public Iterable<Point> movements() {
         return trails;
     }
+    
+	@Override
+	public void inspect(Grid[][] grid) {
+		// TODO Auto-generated method stub
+        int grid_size = grid.length;
+        
+        for (int i = 0; i < grid_size; i++) {
+            for (int j = 0; j < grid_size; j++) {
+                double sir = 0.0d;
+                int termNum = grid[i][j].getTermNum();
+                if (termNum == 0)
+                    continue;
+
+                for (Iterator<Terminal> t = grid[i][j].getTerminals(); t.hasNext();) {
+                	Terminal term = t.next();
+                	
+                	if (term.withinRange(this)) 
+                		term.setCovered();
+                }
+            }
+        }   
+	}
 
 }

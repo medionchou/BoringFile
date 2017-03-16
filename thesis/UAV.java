@@ -1,10 +1,5 @@
 package thesis;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-
-import edu.princeton.cs.algs4.StdRandom;
 
 public abstract class UAV implements StepCounting {
 
@@ -84,6 +79,8 @@ public abstract class UAV implements StepCounting {
     public abstract boolean isStable();
     
     public abstract Iterable<Point> movements();
+    
+    public abstract void inspect(Grid[][] grid);
     
     public static void main(String[] args) {
         
