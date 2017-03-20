@@ -4,43 +4,45 @@ import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
-import edu.princeton.cs.algs4.Merge;
 import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdRandom;
-import edu.princeton.cs.algs4.StdStats;
+import uav.BioInspired;
+import uav.MAD2T;
+import uav.PIA;
+import uav.UAV;
+import uav.UAVType;
+import utility.SequenceGenerator;
+import utility.Util;
 
 public class Environment {
 
 	public static boolean PAUSE = false;
 	public static boolean DRAW = true;
+	public static boolean UAV_OFFSET = true;
 	public static int UAV_NUM = 20;
-	public static int TERMINAL_NUM = 350;
-	public static int GRID_SIZE = 60;
-	public static int ITERATION = 10000;
+	public static final int TERMINAL_NUM = 360;
+	public static final int GRID_SIZE = 60; 
+	public static final int ITERATION = 10000;
 	public static final int MAX_WEIGHT = 5;
 	public static final int MAX_HEIGHT = 5;
 	public static final double TRANSMIT_POWER = 46;
 	public static final double STEP = 0.1;
-	public static final double Z_WEIGHT = 0; // whether UAV should consider
-												// moving z-coordination.
-	public static final String NORMAL_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
+	public static final String UNIFORM_DISTRIBUTION = "UNIFORM_DISTRIBUTION";
 	public static final String POISSON_DISTRIBUTION = "POISSON_DISTRIBUTION";
 	public static final String UAV_RANDOM = "UAV_RANDOM";
 
-	public final static double MDSP = -100.0;
+	public static final double MDSP = -100.0;
 
 	private Grid[][] grid;
 	private UAV[] uav;
@@ -54,12 +56,11 @@ public class Environment {
 	/**
 	 * 
 	 * @param type
-	 *            - which type of Terminal should be generate(uniform, poisson,
-	 *            random, or read from file);
+	 *            - which type of terminal should be generate(uniform, poisson, or read from file).
 	 * @param uavDistri
 	 *            - the file specify initial location for UAV.
 	 * @param uavType
-	 *            - which type of UAV should be created.
+	 *            - which type of UAV should be created (MAD2T, PIA, or BioInspired).
 	 */
 	public Environment(String type, String uavDistri, UAVType uavType) {
 		grid_size = GRID_SIZE;
@@ -69,15 +70,21 @@ public class Environment {
 		bindUAVtoTerm();
 	}
 
-	public void setPowerThreshold(boolean val) {
-		Terminal.DB_THRESHOLD = val;
+	/**
+	 * Control minimal detectable signal power toggle. Set false to disable MDSP and vice versa.
+	 * @param val - toggle value
+	 */
+	public void setMDSPThreshold(boolean val) {
+		Terminal.MDSP_THRESHOLD = val;
 	}
 
+	/**
+	 * Generate terminals information file for this simulation.
+	 * @param filename specify output filename
+	 */
 	public void exportFile(String filename) {
-		if (filename == null)
-			throw new NullPointerException("File name can't be null.");
-		if (filename.length() == 0)
-			return;
+		if (filename == null) throw new NullPointerException("File name can't be null.");
+		if (filename.length() == 0) throw new NullPointerException("File name can't be empty.");
 
 		try {
 			File file = new File(filename);
@@ -96,9 +103,8 @@ public class Environment {
 		}
 	}
 
-	private void draw(int current) {
+	private void draw() {
 		StdDraw.enableDoubleBuffering();
-		// StdDraw.setPenColor(Color.CYAN);
 
 		for (int i = 0; i < grid_size; i++) {
 			for (int j = 0; j < grid_size; j++) {
@@ -116,10 +122,7 @@ public class Environment {
 		}
 
 		for (int i = 0; i < uav.length; i++) {
-			if (i == current)
-				StdDraw.setPenColor(Color.RED);
-			else if (StdDraw.getPenColor() != Color.BLACK)
-				StdDraw.setPenColor(Color.BLACK);
+			StdDraw.setPenColor(Color.BLACK);
 			StdDraw.point(uav[i].x(), uav[i].y());
 		}
 		StdDraw.show();
@@ -148,6 +151,11 @@ public class Environment {
 		return false;
 	}
 
+	
+	/**
+	 * Return results after simulation finished.
+	 * @return array of double containing results
+	 */
 	public double[] simulate() {
 		if (DRAW) {
 			StdDraw.setCanvasSize(720, 720);
@@ -158,38 +166,24 @@ public class Environment {
 		boolean stable;
 		int count = 0;
 		int iterations = 0;
+		
 		for (int i = 0; i < ITERATION; i++, iterations++) {
 			stable = true;
-			if (DRAW)
-				draw(-1);
-			if (PAUSE)
-				while (!StdDraw.hasNextKeyTyped())
-					;
-			int[] seq = sg.sequence(UAV_NUM);
+			if (DRAW) draw();
+			if (PAUSE) while (!StdDraw.hasNextKeyTyped());
+			
+			int[] seq = sg.sequence(uav.length);
 
 			leave = keyControl();
 			if (leave)
 				break;
 
-			// if ((i+1) % 1000 == 0) {
-			// System.out.println("Iteration: " + (i));
-			// for (int j = 0; j < seq.length; j++) {
-			// uav[j].inspect(grid);
-			// }
-			// printConsoleResult();
-			// setPowerThreshold(true);
-			// int num = coveredTerminals();
-
-			// }
-
 			for (int j = 0; j < seq.length; j++) {
 				uav[seq[j]].run(grid);
 				stable &= uav[seq[j]].isStable();
 			}
-			if (stable)
-				count++;
-			else
-				count = 0;
+			if (stable) count++;
+			else count = 0;
 
 			if (count == 10) {
 				count = 0;
@@ -200,98 +194,58 @@ public class Environment {
 		return printConsoleResult(iterations);
 	}
 
-	private int coveredTerminals() {
-		int count = 0;
-		for (int i = 0; i < grid_size; i++) {
-			for (int j = 0; j < grid_size; j++) {
-				double sir = 0.0d;
-				int termNum = grid[i][j].getTermNum();
-				if (termNum == 0)
-					continue;
+	private double[] printConsoleResult(int iteration) {
 
-				for (Iterator<Terminal> t = grid[i][j].getTerminals(); t.hasNext();) {
-					Terminal term = t.next();
-
-					if (term.isCovered())
-						count++;
-
-					term.unsetCovered();
-				}
-			}
-		}
-
-		return count;
-	}
-
-	private double[] printConsoleResult(int it) {
-
-		double avs = 0d;
-		double res[];
-		double step = 0.0;
-		double avd = 0d;
-		int[] term_dist = new int[uav.length];
+		double spectral_efficiency = 0d;
+		double result[];
+		double travel_distance = 0.0;
+		double aud = 0d;
 		int[] served_term = new int[uav.length];
-		double[] st_avd = new double[uav.length];
+		double[] served_term_distance = new double[uav.length];
 
-		setPowerThreshold(false);
+		setMDSPThreshold(false);
 		for (int i = 0; i < uav.length; i++) {
-			res = uav[i].getSpectrumAndTerms(grid);
-			avs += res[0];
-			term_dist[i] = (int) res[1];
-			served_term[i] = (int) res[2];
-			st_avd[i] = res[3];
-			step += uav[i].steps();
+			result = uav[i].getSpectrumAndTerms(grid);
+			spectral_efficiency += result[0];
+			served_term[i] = (int) result[1];
+			served_term_distance[i] = result[2];
+			travel_distance += uav[i].travel_distance();
 		}
-		draw(-1);
+		draw(); //last draw to show served terminals in red color 
 
 		for (int i = 0; i < uav.length; i++) {
 			for (int j = i + 1; j < uav.length; j++) {
-				avd += Point.distance(uav[i].x(), uav[i].y(), uav[i].z(), uav[j].x(), uav[j].y(), uav[j].z());
+				aud += Point.distance(uav[i].x(), uav[i].y(), uav[i].z(), uav[j].x(), uav[j].y(), uav[j].z());
 			}
 		}
-		double std = StdStats.stddev(term_dist);
-		System.out.println("Standard deviation: " + std);
-		System.out.println("Total Average Spectral Efficiency: " + avs / terminal_num);
+		System.out.println("Average Spectral Efficiency: " + spectral_efficiency / terminal_num);
 		System.out.println("Total Terminal num: " + terminal_num);
-		System.out.println("Terminal num: " + IntStream.of(term_dist).sum());
-		System.out.printf("Served terminal num: %d\n", IntStream.of(served_term).sum(),
-				(float) IntStream.of(served_term).sum() / terminal_num * 100);
-		System.out.printf("Served terminal num (%%): %.2f%%\n",
-				(float) IntStream.of(served_term).sum() / terminal_num * 100);
-		System.out.printf("Served terminal num for each UAV: %.2f\n",
-				(float) IntStream.of(served_term).sum() / uav.length);
-		System.out.println(
-				"Average UAV-Terminal distance: " + DoubleStream.of(st_avd).sum() / IntStream.of(served_term).sum());
-		System.out.println("Total steps: " + step);
-		System.out.println("UAV average distance: " + avd / (uav.length * (uav.length - 1) / 2));
-		System.out.println("AVS: " + avs);
+		System.out.printf("Served terminal num: %d\n", IntStream.of(served_term).sum());
+		System.out.printf("Served terminal num (%%): %.2f%%\n", (float) IntStream.of(served_term).sum() / terminal_num * 100);
+		System.out.printf("Served terminals per UAV: %.2f\n", (float) IntStream.of(served_term).sum() / uav.length);
+		System.out.println("Average UAV-Terminal distance: " + DoubleStream.of(served_term_distance).sum() / IntStream.of(served_term).sum());
+		System.out.println("Total travel distance: " + travel_distance);
+		System.out.println("UAV average distance: " + aud / (uav.length * (uav.length - 1) / 2));
+		System.out.println("Total spectral efficiency: " + spectral_efficiency);
+		System.out.println("Iterations: " + iteration);
 
 		int total_served_term = IntStream.of(served_term).sum();
 
-		double[] a = { total_served_term > 0 ? avs / terminal_num : 0, // total
-																		// spectral
-																		// efficiency
-				IntStream.of(served_term).sum(), // # of served terminals
-				step, // cost
-				avd / (uav.length * (uav.length - 1) / 2), // average UAV
-															// distance
-				DoubleStream.of(st_avd).sum() / IntStream.of(served_term).sum(), // averaged
-																					// distance
-																					// of
-																					// served
-																					// terminals
-				(float) IntStream.of(served_term).sum() / uav.length, // served
-																		// terminals
-																		// per
-																		// UAV
-				total_served_term > 0 ? avs : 0, it };
+		double[] a = { total_served_term > 0 ? spectral_efficiency / terminal_num : 0, // average spectral efficiency
+				total_served_term, // # of served terminals
+				travel_distance, // cost
+				aud / (uav.length * (uav.length - 1) / 2), // average UAV distance
+				DoubleStream.of(served_term_distance).sum() / total_served_term, // average UAV-terminal distance
+				(float) total_served_term / uav.length, // served terminals per UAV
+				total_served_term > 0 ? spectral_efficiency : 0, 
+				iteration };
 		return a;
 	}
 
-	private void initUAV(String uavDistri, UAVType uavType) {
-		if (uavDistri == null || uavType == null)
-			throw new NullPointerException("Arguments can't be null");
-		Point[] pt = getUAVLocs(uavDistri);
+	private void initUAV(String uavConfig, UAVType uavType) {
+		if (uavConfig == null || uavType == null) throw new NullPointerException("Arguments can't be null");
+		
+		Point[] pt = getUAVLocs(uavConfig);
 		uav = new UAV[pt.length];
 
 		switch (uavType) {
@@ -314,48 +268,30 @@ public class Environment {
 			sg = PIA.SEQUENCE_GENERATOR;
 			break;
 		}
+		
 		System.out.println("UAV Initialization Finished");
 	}
 
 	private void initTerms(String type) {
 
 		switch (type) {
-		case NORMAL_DISTRIBUTION:
+		case UNIFORM_DISTRIBUTION:
 			uniform_distribution();
 			break;
 		case POISSON_DISTRIBUTION:
 			poisson_distrbution();
 			break;
 		default:
-			read_file(type);
+			read_terms_config(type);
 			break;
 		}
 		System.out.println("Terminal Initialization Finished");
 	}
 
-	public void outFinalLoc(String filename) throws FileNotFoundException {
-		File f = new File(filename);
-		PrintWriter pw = new PrintWriter(f);
-
-		pw.println(terminal_num + " " + grid_size);
-		for (int i = 0; i < terminal_num; i++) {
-			pw.println(x[i] + " " + y[i] + " " + weight[i]);
-		}
-		pw.println("\" Below is uav data");
-
-		for (int i = 0; i < uav.length; i++) {
-			pw.println(Util.round(uav[i].x(), 2) + " " + Util.round(uav[i].y(), 2));
-		}
-
-		pw.close();
-
-		System.out.println("Generate " + filename);
-	}
-
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("GRID_SIZE: " + grid_size + "\tTERM_NUM: " + terminal_num + "\tUAV_NUM: " + UAV_NUM + "\n\n");
+		sb.append("GRID_SIZE: " + grid_size + "\tTERM_NUM: " + terminal_num + "\tUAV_NUM: " + uav.length + "\n\n");
 		sb.append("TERMINALS:\n");
 		sb.append("X\t\tY\t\tWEIGHT\n");
 
@@ -376,11 +312,19 @@ public class Environment {
 		return sb.toString();
 	}
 
-	private Point[] getUAVLocs(String uavDistri) {
+	/**
+	 * Read UAVs' coordinates from configuration file. Since UAVs' initial location is based on area size 60 x 60 km,
+	 * we use <b>UAV_OFFSET</b> flag to control UAVs' location relative to area size 60 x 60 km.
+	 * @param uavConfig UAV configuration filename
+	 * @return UAVs' location array
+	 */
+	private Point[] getUAVLocs(String uavConfig) {
 		Point[] pt = null;
 		int offset = (grid_size - 60) / 2;
-		// offset = 0;
-		switch (uavDistri) {
+		
+		if (!UAV_OFFSET) offset = 0; 
+		
+		switch (uavConfig) {
 		case UAV_RANDOM:
 			Random r = new Random();
 			pt = new Point[UAV_NUM];
@@ -391,9 +335,8 @@ public class Environment {
 			break;
 		default:
 			try {
-				Scanner sc = new Scanner(new File(uavDistri));
+				Scanner sc = new Scanner(new File(uavConfig));
 				pt = new Point[sc.nextInt()];
-				UAV_NUM = pt.length;
 				for (int i = 0; i < pt.length; i++) {
 					pt[i] = new Point(sc.nextDouble() + offset, sc.nextDouble() + offset, sc.nextDouble());
 				}
@@ -486,7 +429,7 @@ public class Environment {
 		}
 	}
 
-	private void read_file(String filename) {
+	private void read_terms_config(String filename) {
 		try {
 			Scanner sc = new Scanner(new File(filename));
 			String s = sc.nextLine();
@@ -510,6 +453,10 @@ public class Environment {
 		}
 	}
 
+	/**
+	 * Output the trails UAVs have traveled
+	 * @throws Exception
+	 */
 	public void outputUAVTrail() throws Exception {
 		for (int i = 0; i < uav.length; i++) {
 			String name = "UAV" + uav[i].getID() + ".txt";
@@ -522,11 +469,25 @@ public class Environment {
 		}
 	}
 
+	/**
+	 * Generate java process to invoke python script. Be sure the python script path and environment variable both exist.
+	 * You can directly execute python script instead of this function.
+	 * @param filename Output terminals file name generated by python script.
+	 * @param num_term The number of terminals
+	 * @param center Cluster center (It is String or Integer type. String type indicates the exact location of each 
+	 * cluster centers while Integer type indicates the number of randomly generated cluster centers) 
+	 * @param std
+	 * @param grid_size area size
+	 * @param randomCenter boolean to control whether the type of <i>center</i> is String or Integer.
+	 * @throws Exception
+	 */
 	public static void generateClusterDataFromPython(String filename, int num_term, Object center, float std,
 			int grid_size, boolean randomCenter) throws Exception {
 
-		String[] cmd = { "python", "./cluster_gen/cluster_gen_sp.py", String.valueOf(num_term),
-				String.valueOf(grid_size), String.valueOf(5),
+		String[] cmd = { "python", "./cluster_gen/cluster_gen.py", 
+				String.valueOf(num_term),
+				String.valueOf(grid_size), 
+				String.valueOf(5),
 				randomCenter ? String.valueOf((int) center) : (String) center, String.valueOf(std), filename };
 
 		ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -550,40 +511,32 @@ public class Environment {
 	}
 
 	public static void oneTimeSimulation() throws Exception {
-		String termConfig = "cluster_with_grid20-100/cluster_grid60_term360.txt";
+		String termConfig = "cluster_with_grid20-100/cluster_grid20_term360.txt";
 		String uavConfig = "uavConfig_height300m.txt";
 		UAVType type = UAVType.BioInspired;
 
 		Environment e = new Environment(termConfig, uavConfig, type);
-		e.setPowerThreshold(true);
-		Environment.ITERATION = 10000;
+		e.setMDSPThreshold(true);
 		Environment.DRAW = true;
 
-		System.out.println("UAV num:\t" + UAV_NUM);
+		System.out.println("UAV num:\t" + e.uav.length);
 		System.out.println("Terminal num:\t" + e.terminal_num);
 		System.out.println("Grid size:\t" + e.grid_size);
 		System.out.println("\nStart simulation");
 		System.out.println("Terminal configure file name:\t" + termConfig);
 		System.out.println("UAV configure file name:\t" + uavConfig);
 		System.out.println("Selected UAV Type:\t\t" + type);
-		System.out.println("PThreash -100 dBm is set to:\t" + Terminal.DB_THRESHOLD);
+		System.out.println("PThreash -100 dBm is set to:\t" + Terminal.MDSP_THRESHOLD);
 		System.out.println();
 
 		e.simulate();
-
-		// e.outputUAVTrail();
-
-		e.outFinalLoc("./result/final_loc_" + type + ".txt");
 	}
 
 	public static void repetitiveSimulation() throws Exception {
 		String uavConfig = "uavConfig_height300m.txt";
-		UAVType type = UAVType.BioInspired;
+		UAVType type = UAVType.MAD2T;
 		int TIMES = 10;
 
-		UAV_NUM = 20;
-		TERMINAL_NUM = 360;
-		GRID_SIZE = 60;
 		double std = 1;
 		double[][][] mean = new double[3][10][8];
 		for (int l = 0; l < TIMES; l++) {
@@ -597,8 +550,6 @@ public class Environment {
 
 				int t = 0;
 				for (int i = 1; i <= 10; i += 1) {
-					// TERMINAL_NUM = i * 360;
-					// GRID_SIZE = i;
 					std = i;
 					Environment e;
 					System.out.println("Experiment num: " + (l + 1));
@@ -617,8 +568,8 @@ public class Environment {
 					System.out.println("Grid_size " + e.grid_size);
 					System.out.println("Terminal_size " + e.terminal_num);
 					System.out.println("Standard deviation " + std);
-					Environment.ITERATION = 10000;
-					e.setPowerThreshold(true);
+
+					e.setMDSPThreshold(true);
 					Environment.DRAW = false;
 
 					double[] a = e.simulate();
@@ -672,9 +623,8 @@ public class Environment {
 
 	public static void main(String[] args) throws Exception {
 		// Environment.PAUSE = true;
-		 oneTimeSimulation();
+//		 oneTimeSimulation();
 //		repetitiveSimulation();
-
 	}
 
 }

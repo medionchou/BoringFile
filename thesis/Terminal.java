@@ -3,45 +3,38 @@ package thesis;
 import java.util.Arrays;
 
 import edu.princeton.cs.algs4.StdStats;
+import uav.MAD2T;
+import uav.UAV;
 
 public class Terminal {
     
-    public static boolean DB_THRESHOLD = false;
-    private final static int NOT_INITIALIZED = -1;
+    public static boolean MDSP_THRESHOLD = false;
+    private final static double NOT_INITIALIZED = -1;
 
     private double x;
     private double y;
     private int weight;
-    private int avail_uav;
     private UAV[] uav;
-    private double[] net_power; //cache uav net power value for speeding up calculation.
+    private double[] signal_strength; //cache received signal power from each UAV to speed up runnig time.
     private boolean isCovered;
     
     public Terminal(double x, double y, int weight) {
         this.x = x;
         this.y = y;
         this.weight = weight;
-        avail_uav = 1; // avoid divide by zero
         isCovered = false;
     }
     
     public void setUAV(UAV[] uav) {
         this.uav = uav;
-        net_power = new double[uav.length];
-        Arrays.fill(net_power, NOT_INITIALIZED);
+        signal_strength = new double[uav.length];
+        Arrays.fill(signal_strength, NOT_INITIALIZED);
     }
     
     public int getWeight() {
         return weight;
     }
     
-    public int getCoveringUAV() {
-        return avail_uav;
-    }
-    
-    public void setCoveringUAV(int num) {
-        avail_uav += num;
-    }
     
     /**
      * 
@@ -53,36 +46,35 @@ public class Terminal {
      */
     public double peekSIR(int uavID, double mx, double my, double mz) {
         double interference = collectITF(uavID);
-        net_power[uavID] = getNetPower(uav[uavID], mx, my, mz);
-        double tmp = net_power[uavID];
+        signal_strength[uavID] = getSignalStrenth(uav[uavID], mx, my, mz);
+        double tmp = signal_strength[uavID];
        
         if (indexOfLargestPower() == uavID) {
-//            double tmp = net_power[uavID];
-            net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
+            signal_strength[uavID] = NOT_INITIALIZED; // reset power of uavID because we don't know if UAV really takes this move.
             
-            if (DB_THRESHOLD && tmp == 0.0) return 0.0d;
+            if (MDSP_THRESHOLD && tmp == 0.0) return 0.0d;
             
             if (interference == 0) return 15.0;
             else return tmp / interference;
         }
         else {
-            net_power[uavID] = -1.0; // reset power of uavID because we don't know if UAV really takes this move.
+            signal_strength[uavID] = NOT_INITIALIZED; // reset power of uavID because we don't know if UAV really takes this move.
             return 0.0d;
         }
     }
     
     public double getSIR(int uavID) {
         
-        for (int i = 0; i < net_power.length; i++) net_power[i] = -1; // reset all UAV cached net_power.
+        for (int i = 0; i < signal_strength.length; i++) signal_strength[i] = NOT_INITIALIZED; // reset all UAV cached net_power.
         
         double interference = collectITF(uavID);
-        net_power[uavID] = getNetPower(uav[uavID], 0, 0, 0); // what the fuck
+        signal_strength[uavID] = getSignalStrenth(uav[uavID], 0, 0, 0); // what the fuck
         
         if (indexOfLargestPower() == uavID) {
-            if (DB_THRESHOLD && net_power[uavID] == 0.0) return 0.0d;  
+            if (MDSP_THRESHOLD && signal_strength[uavID] == 0.0) return 0.0d;  
             
             if (interference == 0) return 15.0;
-            else return net_power[uavID] / interference;
+            else return signal_strength[uavID] / interference;
         }
         else {
             return 0.0d;
@@ -107,7 +99,7 @@ public class Terminal {
     
     public boolean withinRange(UAV theuav, double mx, double my, double mz) {
         
-        double result = getNetPower(theuav, mx, my, mz);
+        double result = getSignalStrenth(theuav, mx, my, mz);
         
         
         if (result == 0.0) return false;
@@ -116,33 +108,22 @@ public class Terminal {
     
     public boolean withinRange(UAV theuav) {
         
-        double result = getNetPower(theuav, 0, 0, 0);
+        double result = getSignalStrenth(theuav, 0, 0, 0);
 
         if (result == 0.0) return false;
         else return true;
     }
     
     public boolean isServed(UAV theuav) {
-        
-        Terminal.DB_THRESHOLD = true;
-        
-        double result = getSIR(theuav.getID());
-        
-        Terminal.DB_THRESHOLD = false;
+        boolean tmp = MDSP_THRESHOLD;
+        double result;
+        		
+        MDSP_THRESHOLD = true;
+        result = getSIR(theuav.getID());
+        MDSP_THRESHOLD = tmp;
         
         if (result == 0.0) return false;
         else return true;
-    }
-    
-    public boolean isClosest(UAV theuav) {
-        double dist = distance(theuav);
-        for (int i = 0; i < uav.length; i++) {
-            if (i != theuav.getID()) {
-                double tmp = distance(uav[i]);
-                if (tmp <= dist) return false;
-            }
-        }
-        return true;
     }
     
     public boolean isCovered() {
@@ -163,11 +144,11 @@ public class Terminal {
     
     private int indexOfLargestPower() {
         double largest = Double.MIN_VALUE;
-        int index = net_power.length - 1;
+        int index = signal_strength.length - 1;
         
-        for (int i = net_power.length - 1; i >= 0; i--) {
-            if (net_power[i] >= largest) {
-                largest = net_power[i];
+        for (int i = signal_strength.length - 1; i >= 0; i--) {
+            if (signal_strength[i] >= largest) {
+                largest = signal_strength[i];
                 index = i;
             }
         }
@@ -185,30 +166,27 @@ public class Terminal {
         
         for (int i = 0; i < uav.length; i++) {
             if (i == uavID) continue;
-            if (net_power[i] == -1) net_power[i] = getNetPower(uav[i], 0, 0, 0);
+            if (signal_strength[i] == NOT_INITIALIZED) signal_strength[i] = getSignalStrenth(uav[i], 0, 0, 0);
             
-            itf += net_power[i];
+            itf += signal_strength[i];
         }
         return itf;
     }
 
     /**
      * @param uav - the target used to calculate power with respect to this terminal.
-     * @param mx - the intended moving value in x direction 
-     * @param my - the intended moving value in y direction
-     * @param mz - the intended moving value in z direction
-     * @return net power which is the trasmitted power substracting path loss in MiliWatt.
+     * @param mx - the intended moving direction in x direction 
+     * @param my - the intended moving direction in y direction
+     * @param mz - the intended moving direction in z direction
+     * @return received signal strength in MiliWatt.
      */
-    private double getNetPower(UAV uav, double mx, double my, double mz) {
+    private double getSignalStrenth(UAV uav, double mx, double my, double mz) {
         double uavX = uav.x() + mx;
         double uavY = uav.y() + my;
         double uavZ = (uav.z() + mz) < 0 ? 0 : uav.z() + mz;
         double degree = angleToUAV(uavX, uavY, uavZ);
         
-        if (degree < 0) {
-            System.out.println(uavX + " " + uavY + " " + uavZ + " " + x + " " + y);
-            System.out.println("Unexpected negative degree " + uav.getID() + " :" +  degree);
-        }
+        if (degree < 0) throw new IllegalArgumentException("degree outside of desired range 0 - 90");
         
         double distance2D = Math.hypot(x - uavX, y - uavY);
         double distance = Math.hypot(distance2D, uavZ);
@@ -219,7 +197,7 @@ public class Terminal {
         double power = Environment.TRANSMIT_POWER - pathLoss(degree, distance, uav);
         
         
-        if (DB_THRESHOLD && power < Environment.MDSP) return 0.0; 
+        if (MDSP_THRESHOLD && (power < Environment.MDSP)) return 0.0; 
         return dBmToMiliWatt(power);
     }
     
@@ -235,11 +213,6 @@ public class Terminal {
         else if (degree >= 10 && degree <= 90)
             return 98.4 + 20 * Math.log10(distance) + ((-94.2 + degree) / (-3.44 + 0.0318 * degree));
         else {
-            System.out.println(degree + " " + distance);
-            System.out.println(this);
-            MAD2T g = (MAD2T) uav;
-            System.out.println(g.tmp());
-            
             throw new IllegalArgumentException("Invalid argument");
         }
     }

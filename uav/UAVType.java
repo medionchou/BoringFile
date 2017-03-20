@@ -1,4 +1,4 @@
-package thesis;
+package uav;
 
 public enum UAVType {
     BioInspired,

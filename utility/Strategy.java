@@ -1,11 +1,9 @@
-package thesis;
+package utility;
 
 import java.util.Random;
 
 public enum Strategy {
     STILL,
-    UP,
-    DOWN,
     FORWARD,
     BACKWARD,
     RIGHT,

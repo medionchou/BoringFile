@@ -1,4 +1,4 @@
-package thesis;
+package uav;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,13 +11,21 @@ import java.util.Random;
 import java.util.Set;
 
 import edu.princeton.cs.algs4.StdRandom;
+import thesis.Environment;
+import thesis.Grid;
+import thesis.Point;
+import thesis.Terminal;
+import utility.SequenceGenerator;
+import utility.Strategy;
+import utility.Util;
 
 public class PIA extends UAV {
     
     public static double COST_COEF = 0.1;
     public static double THRESHOLD_IMPROVEMENT = 1.0;
-    // 14 is the theoretical maximal distance which signal is able to travel based on 46dBm.
+    /* 14 is the theoretical maximal distance which signal is able to travel based on transmission power 46dBm. */
     private static final int BOUNDARY = 14 + (int)Math.ceil(Environment.STEP);
+    
     
     private HashMap<Terminal, Integer> potentialTerms;
     private Point rp;
@@ -52,49 +60,6 @@ public class PIA extends UAV {
         potentialTerms = new HashMap<>();
         trails = new HashSet<>();
         step = 0.0;
-
-    }
-
-    @Override
-    public double[] getSpectrumAndTerms(Grid[][] grid) {
-
-        int grid_size = grid.length;
-        double[] res = new double[4];
-        int si_deno = 0;
-        int served_terminal = 0;
-        double si_no = 0.0d;
-        double st_avd = 0.d;
-        
-        
-        for (int i = 0; i < grid_size; i++) {
-            for (int j = 0; j < grid_size; j++) {
-                double sir = 0.0d;
-                int termNum = grid[i][j].getTermNum();
-                if (termNum == 0)
-                    continue;
-
-                Terminal t = grid[i][j].getTerminal();
-                sir = t.getSIR(getID());
-                
-                if (t.isServed(this)) {
-                	t.setCovered();
-                    served_terminal += termNum;
-                    st_avd += t.distance(this) * termNum;
-                }
-                double tmp = UAV.ld(sir);
-                if (tmp > 0) {
-                    si_no += tmp * termNum;
-                    si_deno += termNum;
-                }
-            }
-        }
-
-        res[0] = si_no;
-        res[1] = si_deno;
-        res[2] = served_terminal;
-        res[3] = st_avd;
-
-        return res;
     }
 
     @Override
@@ -106,12 +71,12 @@ public class PIA extends UAV {
         collectTerms(grid, grid.length);
         
         if (potentialTerms.size() == 0) { // random waypoint
-            moveByPoint(randomPoint(grid_size), grid_size);
+            moveByPoint(randomWayPoint(grid_size), grid_size);
             step += Environment.STEP;
         } else {
             Point p = bestStrategy();
             if (p == null) {  // random waypoint
-                moveByPoint(randomPoint(grid_size), grid_size);
+                moveByPoint(randomWayPoint(grid_size), grid_size);
                 step += Environment.STEP;
             }
             else { // guided movement
@@ -183,15 +148,6 @@ public class PIA extends UAV {
         
     }
     
-    private double cost(Strategy stg) {
-        switch (stg) {
-        case STILL:
-            return 0.0;
-        default:
-            return Environment.STEP;
-        }  
-    }
-    
     private double payoff(HashSet<Terminal> termSet, HashMap<Terminal, Double> served_cost, Point pt) {
         double distance = 0.0;
         double td = 0.0;
@@ -218,7 +174,7 @@ public class PIA extends UAV {
         }
     }
     
-    private Point randomPoint(int grid_size) {
+    private Point randomWayPoint(int grid_size) {
         if (rp == null || rp.isClose(x(), y(), 0)) {
             int x = getCoordinate(grid_size, (int)x());
             int y = getCoordinate(grid_size, (int)y());
@@ -242,11 +198,6 @@ public class PIA extends UAV {
         
         return tmp;
     }
-    
-    public Point tmp() {
-        return rp;
-    }
-   
     
     private void collectTerms(Grid[][] grid, int grid_size) {
         int x = (int) x();
@@ -284,7 +235,7 @@ public class PIA extends UAV {
     }
 
     @Override
-    public double steps() {
+    public double travel_distance() {
         return step;
     }
 
@@ -300,26 +251,5 @@ public class PIA extends UAV {
         return trails;
     }
     
-	@Override
-	public void inspect(Grid[][] grid) {
-		// TODO Auto-generated method stub
-        int grid_size = grid.length;
-        
-        for (int i = 0; i < grid_size; i++) {
-            for (int j = 0; j < grid_size; j++) {
-                double sir = 0.0d;
-                int termNum = grid[i][j].getTermNum();
-                if (termNum == 0)
-                    continue;
-
-                for (Iterator<Terminal> t = grid[i][j].getTerminals(); t.hasNext();) {
-                	Terminal term = t.next();
-                	
-                	if (term.withinRange(this)) 
-                		term.setCovered();
-                }
-            }
-        }   
-	}
 
 }

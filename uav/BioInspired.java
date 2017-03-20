@@ -1,4 +1,4 @@
-package thesis;
+package uav;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -7,6 +7,12 @@ import java.util.List;
 import java.util.Random;
 
 import edu.princeton.cs.algs4.StdRandom;
+import thesis.Environment;
+import thesis.Grid;
+import thesis.Point;
+import thesis.Terminal;
+import utility.SequenceGenerator;
+import utility.Util;
 
 /**
  * 
@@ -19,7 +25,6 @@ public class BioInspired extends UAV {
 	private double last_profit;
 	private Point last_move;
 	private double step;
-	private Point move;
 	private HashSet<Point> trails;
 
 	public static final SequenceGenerator SEQUENCE_GENERATOR = new SequenceGenerator() {
@@ -54,8 +59,8 @@ public class BioInspired extends UAV {
 	@Override
 	public void run(Grid[][] grid) {
 		int grid_size = grid.length;
-		int si_deno = 0;
-		double si_no = 0.0d;
+		int served_term = 0;
+		double spectral_efficiency = 0.0d;
 		trails.add(new Point(this.x(), this.y(), this.z()));
 
 		for (int i = 0; i < grid_size; i++) {
@@ -69,22 +74,22 @@ public class BioInspired extends UAV {
 				Point p = last_move;
 				sir = t.peekSIR(getID(), p.x, p.y, p.z);
 
-				double tmp = UAV.ld(sir);
+				double tmp = ld(sir);
 				if (tmp > 0) {
-					si_no += tmp * termNum;
-					si_deno += termNum;
+					spectral_efficiency += tmp * termNum;
+					served_term += termNum;
 				} 
 			}
 		}
 		
 
-		if (si_deno > 0) {
-			double si = si_no / si_deno;
-			if (last_profit >= si) {
+		if (served_term > 0) {
+			double se = spectral_efficiency / served_term;
+			if (last_profit >= se) {
 				last_move = randomPoint(grid_size);
 			}
 			
-			last_profit = si;
+			last_profit = se;
 		} else {
 			last_move = randomPoint(grid_size);
 		}
@@ -104,46 +109,6 @@ public class BioInspired extends UAV {
 		}
 	}
 	
-
-	@Override
-	public double[] getSpectrumAndTerms(Grid[][] grid) {
-		int grid_size = grid.length;
-		int si_deno = 0;
-		int served_terminal = 0;
-		double si_no = 0.0d;
-	    double st_avd = 0.d;
-		double[] res = new double[4];
-
-		for (int i = 0; i < grid_size; i++) {
-			for (int j = 0; j < grid_size; j++) {
-				double sir = 0.0d;
-				int termNum = grid[i][j].getTermNum();
-				if (termNum == 0)
-					continue;
-
-				Terminal t = grid[i][j].getTerminal();
-				sir = t.getSIR(getID());
-                if (t.isServed(this)) {
-                	t.setCovered();
-                    served_terminal += termNum;
-                    st_avd += t.distance(this) * termNum;
-                }
-				double tmp = UAV.ld(sir);
-				if (tmp > 0) {
-					si_no += tmp * termNum;
-					si_deno += termNum;
-				}
-			}
-		}
-		
-		res[0] = si_no;
-		res[1] = si_deno;
-		res[2] = served_terminal;
-        res[3] = st_avd;
-
-		return res;
-	}
-
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
@@ -158,7 +123,7 @@ public class BioInspired extends UAV {
 	}
 
     @Override
-    public double steps() {
+    public double travel_distance() {
         return step;
     }
 
@@ -171,11 +136,5 @@ public class BioInspired extends UAV {
     public Iterable<Point> movements() {
         return trails;
     }
-
-	@Override
-	public void inspect(Grid[][] grid) {
-		// TODO Auto-generated method stub
-		
-	}
 
 }

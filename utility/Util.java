@@ -1,4 +1,4 @@
-package thesis;
+package utility;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Random;
+
+import thesis.Environment;
+import thesis.Point;
 
 public class Util {
 	
@@ -15,10 +18,6 @@ public class Util {
 		Strategy st = Strategy.randomStrategy();
 		
 		switch(st) {
-		case UP:
-			return new Point(0, 0, Environment.STEP * Environment.Z_WEIGHT);
-		case DOWN:
-			return new Point(0, 0, -Environment.STEP * Environment.Z_WEIGHT);
 		case FORWARD:
 		    return new Point(0, Environment.STEP, 0);
 		case BACKWARD:
@@ -34,10 +33,6 @@ public class Util {
 	
 	public static Point getPointByStrategy(Strategy st) {
 		switch(st) {
-		case UP:
-			return new Point(0, 0, Environment.STEP * Environment.Z_WEIGHT);
-		case DOWN:
-			return new Point(0, 0, -Environment.STEP * Environment.Z_WEIGHT);
 		case FORWARD:
             return new Point(0, Environment.STEP, 0);
         case BACKWARD:
@@ -59,6 +54,15 @@ public class Util {
 	    return bd.doubleValue();
 	}
 
+	/**
+	 * Generate file for regular terminals distribution where each terminal has a distance <i>interval</i> 
+	 * from its neighboring terminals.
+	 * 
+	 * @param interval - distance between terminals
+	 * @param grid_size - area size
+	 * @param filename - output filename
+	 * 
+	 */
     public static void fixedDistanceTerms(int interval, int grid_size, String filename) {
 	    if (interval <= 0) return;
 	    
